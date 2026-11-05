@@ -99,8 +99,8 @@ ul.mm{margin:0;padding:0;list-style:none;font-size:17px;line-height:1.6}
 .flag{display:block;width:190px;max-width:100%;border:1px solid #cfd6ea;border-radius:6px;margin-bottom:10px}
 #feat g[id^=L-]{display:none}
 #map[data-layer=rivers] #L-rivers,#map[data-layer=mts] #L-mts,#map[data-layer=cities] #L-cities{display:inline}
-#map[data-layer] .c{opacity:.5;pointer-events:none}
-#map[data-layer] .dot{display:none}
+#map[data-layer]:not([data-layer=""]) .c{opacity:.5;pointer-events:none}
+#map[data-layer]:not([data-layer=""]) .dot{display:none}
 .f{cursor:pointer}
 .rv .vis{fill:none;stroke:#1f78d1;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .rv .hit{fill:none;stroke:transparent;stroke-width:16;stroke-linecap:round;vector-effect:non-scaling-stroke;pointer-events:stroke}
@@ -287,7 +287,7 @@ const G=k=>svg.querySelector('[data-k="'+k+'"]');
 function place(id,c){const e=$('#'+id);e.setAttribute('cx',c.x);e.setAttribute('cy',c.y);e.style.display='block'}
 function clear(){svg.querySelectorAll('.c path,.c .dot').forEach(e=>e.style.fill='');svg.classList.remove('dim');svg.querySelectorAll('.c,.f').forEach(g=>g.classList.remove('hl','ok','bad'));$('#cap').style.display=$('#ring').style.display='none'}
 function intro(){clear();card.innerHTML='<div class="q">Klikni na ľubovoľný štát.</div><p class="ans">Zobrazí sa jeho názov a hlavné mesto.</p><p class="hint">Mapu približuješ kolieskom myši alebo tlačidlami +/−, posúvaš ju ťahaním. Malé štáty (Monako, Vatikán, San Maríno…) sú označené bodkou.</p>'}
-function start(){clearInterval(S.tm);clearTimeout(S.to);S.live=false;S.sub='';svg.dataset.layer=isF(S.m)?S.m:'';clear();resetView();$('#reg').disabled=S.m==='study'||S.m==='member';
+function start(){clearInterval(S.tm);clearTimeout(S.to);S.live=false;S.sub='';if(isF(S.m))svg.dataset.layer=S.m;else svg.removeAttribute('data-layer');clear();resetView();$('#reg').disabled=S.m==='study'||S.m==='member';
  if(S.m==='member')return memIntro();
  if(isF(S.m)){$('#reg').disabled=true;return fIntro()}
  if(S.m==='study')return intro();
@@ -299,7 +299,7 @@ function next(){clear();S.lock=false;const k=S.q[S.i],c=D.c[k],m=TY();let q,ch='
  if(m==='findcap')q=`Ktorý štát má hlavné mesto <b>${c.cap}</b>?`;
  if(m==='name'||m==='cap'||m==='flag'){if(m!=='flag'){svg.classList.add('dim');G(k).classList.add('hl');
   if(c.m){place('ring',c);zoomTo(c.x,c.y,150)}}
-  q=m==='name'?'Ako sa volá tento štát?':m==='cap'?`Aké je hlavné mesto štátu <b>${c.n}</b>?`:`<img class="flag" alt="Vlajka" src="https://flagcdn.com/w320/${c.iso}.png">Ktorý štát má túto vlajku?`;
+  q=m==='name'?'Ako sa volá tento štát?':m==='cap'?`Aké je hlavné mesto štátu <b>${c.n}</b>?`:`<img class="flag" onerror="this.style.display='none'" alt="Vlajka" src="https://flagcdn.com/w320/${c.iso}.png">Ktorý štát má túto vlajku?`;
   const f=m==='cap'?'cap':'n',opts=sh([k,...sh(pool().filter(x=>x!==k)).slice(0,3)]);
   ch='<div class="choices">'+opts.map(o=>`<button data-o="${o}">${D.c[o][f]}</button>`).join('')+'</div>'}
  const left=S.m==='comp'?Math.max(0,S.cs.end-Date.now()):0;
@@ -322,7 +322,7 @@ function mapClick(k,f){
  if(isF(S.m)){if(S.sub==='quiz'){if(S.qf[S.i]==='find'&&f&&FA[f]&&FA[f].t===S.m&&!S.lock)fAnswer(f)}else fExplore(f);return}
  if(S.m==='member'){if(S.sub!=='quiz')memIntro(k);return}
  if(S.m==='study'){clear();if(!k)return intro();const c=D.c[k];svg.classList.add('dim');G(k).classList.add('hl');place('cap',c);
-  card.innerHTML=`<img class="flag" style="width:120px" alt="Vlajka" src="https://flagcdn.com/w320/${c.iso}.png"><div class="q"><b>${c.n}</b></div><p class="ans">Hlavné mesto: <b>${c.cap}</b></p><p class="hint">Klikni na ďalší štát.</p>`;return}
+  card.innerHTML=`<img class="flag" onerror="this.style.display='none'" style="width:120px" alt="Vlajka" src="https://flagcdn.com/w320/${c.iso}.png"><div class="q"><b>${c.n}</b></div><p class="ans">Hlavné mesto: <b>${c.cap}</b></p><p class="hint">Klikni na ďalší štát.</p>`;return}
  if((TY()==='find'||TY()==='findcap')&&k&&!S.lock&&(S.m!=='comp'||S.live))answer(k)}
 card.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
  if(b.dataset.o)return answer(b.dataset.o);
