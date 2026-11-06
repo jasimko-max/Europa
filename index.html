@@ -221,7 +221,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const LB='europa_lb_v1';
 const lbGet=()=>{try{return JSON.parse(localStorage.getItem(LB)||'[]')}catch(e){return[]}};
 const lbSet=a=>{try{localStorage.setItem(LB,JSON.stringify(a))}catch(e){}};
-const API=window.EUROPA_API||'';/* adresa Workera sa nastavuje v súbore config.js; bez nej je rebríček len na tomto zariadení */
+const API=window.EUROPA_API||'https://europa-lb.jasimko.workers.dev/';/* adresa Workera sa nastavuje v súbore config.js; bez nej je rebríček len na tomto zariadení */
 function lbInner(a,hl,shared){return `<div class="lbh">Rebríček – ${REG[S.r][0]}${shared?' (celá škola)':''}</div>`+(a.length?`<ol class="lb">${a.map(x=>`<li${x.id===hl?' class="me"':''}><span>${esc(x.n)}</span><b>${x.s}</b></li>`).join('')}</ol>`:'<p class="hint">Zatiaľ tu nikto nie je.</p>')}
 function lbHtml(hl){const a=lbGet().filter(x=>x.r===S.r).sort((a,b)=>b.s-a.s||a.b-b.b).slice(0,10);return `<div id="lbbox">${lbInner(a,hl,false)}</div>`}
 async function refreshLB(hl){if(!API)return;try{const r=await fetch(`${API}/scores?r=${S.r}`);if(!r.ok)return;const a=await r.json(),box=$('#lbbox');if(box)box.innerHTML=lbInner(a,hl,true)}catch(e){}}
