@@ -104,7 +104,7 @@ aside>*{flex-shrink:0}
 }
 .ph{margin:2px 0 4px}
 .ph.load{display:flex;align-items:center;justify-content:center;height:130px;border-radius:12px;background:#eef1f8;color:#7c86a8;font-size:14px}
-.ph img{display:block;width:100%;max-height:230px;object-fit:cover;border-radius:12px;background:#eef1f8}
+.ph img{display:block;width:100%;max-height:190px;object-fit:cover;border-radius:12px;background:#eef1f8}
 .ph .cap{margin-top:4px;font-size:12px;opacity:.7}
 .ph .cap a{color:inherit}
 .foot{margin-top:auto;font-size:12px;opacity:.6;line-height:1.4}
@@ -203,34 +203,6 @@ const nameOf=it=>(it.t==='mesta'||it.t==='hrady'||it.t==='unesco'||it.t==='jasky
 const TYPES=t=>['find','name'].concat(t==='kraje'?['cap']:(t==='mesta'||t==='hrady'||t==='unesco'||t==='jaskyne')?['kraj']:[]);
 const pickType=(id,t)=>{const ty=sh(TYPES(t))[0];return ty==='kraj'&&!FA[id].kr?'name':ty};
 
-/* ---- fotografie z Wikipédie (Wikimedia Commons) ---- */
-const PH={};
-const phHolder=id=>FA[id]&&FA[id].wk?`<div id="phbox" class="ph load" data-id="${id}">Načítavam fotografiu…</div>`:'';
-async function wikiFetch(params){const r=await fetch('https://sk.wikipedia.org/w/api.php?'+new URLSearchParams({format:'json',origin:'*',action:'query',...params}));return r.json()}
-const phInfo=pg=>pg&&pg.thumbnail?{src:pg.thumbnail.source,file:pg.pageimage||'',title:pg.title}:null;
-async function wikiPhoto(it){
- if(it.id in PH)return PH[it.id];
- let res=null;
- try{
-  const base={prop:'pageimages',piprop:'thumbnail|name',pithumbsize:'700',redirects:'1'};
-  let d=await wikiFetch({...base,titles:it.wk});
-  res=phInfo(Object.values((d.query&&d.query.pages)||{})[0]);
-  if(!res){ // záloha: vyhľadávanie podľa názvu
-   for(const q of [it.wk,it.n]){
-    d=await wikiFetch({...base,generator:'search',gsrsearch:q,gsrnamespace:'0',gsrlimit:'4'});
-    const pages=Object.values((d.query&&d.query.pages)||{}).sort((a,b)=>(a.index||9)-(b.index||9));
-    res=pages.map(phInfo).find(Boolean)||null;if(res)break}}
- }catch(e){res=null}
- PH[it.id]=res;return res}
-async function showPhoto(id){
- const it=FA[id];if(!it||!it.wk)return;
- const p=await wikiPhoto(it),box=$('#phbox');
- if(!box||box.dataset.id!==id)return;
- if(!p){box.remove();return}
- box.className='ph';
- const src=p.file?'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(p.file):'https://sk.wikipedia.org/wiki/'+encodeURIComponent(p.title);
- box.innerHTML=`<img alt="Fotografia: ${esc(it.n)}" src="${esc(p.src)}"><div class="cap">Foto: <a href="${esc(src)}" target="_blank" rel="noopener">Wikimedia Commons</a> (autor a licencia na stránke súboru)</div>`;
- const im=box.querySelector('img');im.onerror=()=>box.remove()}
 function intro(){clear();resetView();S.sub='';const t=S.m,L=D[t];
  card.innerHTML=`<div class="q">${TH[t]}</div><p class="ans">Klikni na ${t==='kraje'?'kraj':t==='rieky'?'rieku alebo čiaru':'značku'} a zobrazí sa názov.</p><button class="primary" id="quiz">Kvíz na 10 otázok</button><p class="hint">Na mape je ${L.length}: ${L.map(x=>x.n).sort((a,b)=>a.localeCompare(b,'sk')).join(', ')}.</p>`}
 function explore(id){clear();if(!id||!FA[id])return intro();FEL(id).classList.add('hl');mark(id);
@@ -384,7 +356,7 @@ function lyClick(k,f){
  if(f&&FA[f]){const it=FA[f],el=FEL(f);if(el)el.classList.add('hl');
   if(it.x!==undefined){const r=$('#ring');r.setAttribute('cx',it.x);r.setAttribute('cy',it.y);r.style.display='block'}
   lyInfo(`<div class="q"><b>${CFG.fname(it)}</b></div>${it.i?`<p class="ans">${it.i}</p>`:''}${CFG.photo?CFG.photo(it):''}`);if(CFG.afterInfo)CFG.afterInfo(it);return}
- if(k&&CFG.country){lyInfo(CFG.country(k));return}
+ if(k&&CFG.country){lyInfo(CFG.country(k));if(CFG.afterCountry)CFG.afterCountry(k);return}
  lyInfo('')}
 function lyPrint(){
  const act=CFG.layers.filter(l=>LY.on.has(l.id));
@@ -419,6 +391,36 @@ async function exportCSV(){
  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vysledky-'+EXPCFG.file+'-'+new Date().toISOString().slice(0,10)+'.csv';
  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+
+/* ===== Fotografie z Wikipédie (Wikimedia Commons) ===== */
+const PH={},PHI={};
+const phItem=id=>FA[id]||PHI[id];
+const phHolder=id=>{const it=phItem(id);return it&&it.wk?`<div id="phbox" class="ph load" data-id="${id}">Načítavam fotografiu…</div>`:''};
+async function wikiFetch(params){const r=await fetch('https://sk.wikipedia.org/w/api.php?'+new URLSearchParams({format:'json',origin:'*',action:'query',...params}));return r.json()}
+const phInfo=pg=>pg&&pg.thumbnail?{src:pg.thumbnail.source,file:pg.pageimage||'',title:pg.title}:null;
+async function wikiPhoto(it){
+ if(it.id in PH)return PH[it.id];
+ let res=null;
+ try{
+  const base={prop:'pageimages',piprop:'thumbnail|name',pithumbsize:'700',redirects:'1'};
+  let d=await wikiFetch({...base,titles:it.wk});
+  res=phInfo(Object.values((d.query&&d.query.pages)||{})[0]);
+  if(!res){
+   for(const q of [it.wk,it.n]){
+    d=await wikiFetch({...base,generator:'search',gsrsearch:q,gsrnamespace:'0',gsrlimit:'4'});
+    const pages=Object.values((d.query&&d.query.pages)||{}).sort((a,b)=>(a.index||9)-(b.index||9));
+    res=pages.map(phInfo).find(Boolean)||null;if(res)break}}
+ }catch(e){res=null}
+ PH[it.id]=res;return res}
+async function showPhoto(id){
+ const it=phItem(id);if(!it||!it.wk)return;
+ const p=await wikiPhoto(it),box=$('#phbox');
+ if(!box||box.dataset.id!==id)return;
+ if(!p){box.remove();return}
+ box.className='ph';
+ const src=p.file?'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(p.file):'https://sk.wikipedia.org/wiki/'+encodeURIComponent(p.title);
+ box.innerHTML=`<img alt="Fotografia: ${esc(it.n)}" src="${esc(p.src)}"><div class="cap">Foto: <a href="${esc(src)}" target="_blank" rel="noopener">Wikimedia Commons</a> (autor a licencia na stránke súboru)</div>`;
+ const im=box.querySelector('img');im.onerror=()=>box.remove()}
 
 setVB();start();
 </script>
