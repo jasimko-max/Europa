@@ -381,9 +381,9 @@ const afterCountry=k=>{const c=D.c[k];if(c.pr){card.scrollIntoView({behavior:'sm
 /* ---- Hádaj štát podľa indícií ---- */
 let CL=null,CLCH=false;
 const stemOf=w=>w.length>5?w.slice(0,-2):w.slice(0,-1);
-function clueStems(k){const c=D.c[k],w=c.n.split(' ');let s=[stemOf(w[w.length-1])];
- if(k==='BIH')s=['Bosn','Herceg'];if(k==='GBR')s=['Británi','Anglick','Škótsk'];if(k==='MKD')s=['Macedón'];if(k==='SMR')s=['Maríno'];
- return{s:s.map(x=>x.toLowerCase()),cap:stemOf(c.cap.split(' ')[0]).toLowerCase()}}
+const STEMS={DEU:['nemc','nemec'],CHE:['švajč'],LIE:['lichtenštajn'],AUT:['rakús','rakúš'],ITA:['taliansk','talian'],FRA:['francúz'],ESP:['španiel'],PRT:['portugal'],GBR:['brit','angl','škót','spojen'],IRL:['írsk','íri','írov'],NLD:['holand'],BEL:['belg'],LUX:['luxemb'],DNK:['dán'],NOR:['nór'],SWE:['švéd'],FIN:['fínsk','fíns','fínov'],EST:['estón'],LVA:['lotyš'],LTU:['litov','litv'],POL:['poľs','poliak'],CZE:['česk','česi','čech','česť'],SVK:['slovensk','slovák'],HUN:['maďar'],SVN:['slovin'],HRV:['chorvát'],BIH:['bosn','herceg'],SRB:['srb'],MNE:['čiernohor','čierna hor'],MKD:['macedón'],ALB:['albán'],GRC:['grék','gréc','grécko'],BGR:['bulhar'],ROU:['rumun'],MDA:['moldav'],UKR:['ukrajin'],BLR:['bielorus'],RUS:['rus'],TUR:['turec','turk'],CYP:['cypr'],ISL:['island','islan'],AND:['andorr'],MCO:['monak'],SMR:['maríno'],VAT:['vatik'],MLT:['malt']};
+function clueStems(k){const c=D.c[k],w=c.n.split(' ');
+ return{s:(STEMS[k]||[stemOf(w[w.length-1])]).map(x=>x.toLowerCase()),cap:stemOf(c.cap.split(' ')[0]).toLowerCase()}}
 const clueLeak=(t,st)=>{const x=t.toLowerCase();return st.s.some(s=>x.includes(s))||x.includes(st.cap)};
 function buildClues(k){
  const c=D.c[k],p=c.pr,st=clueStems(k),ok=t=>!clueLeak(t,st),L=[];
