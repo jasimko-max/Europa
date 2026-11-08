@@ -107,6 +107,19 @@ aside>*{flex-shrink:0}
 .ph img{display:block;width:100%;max-height:190px;object-fit:cover;border-radius:12px;background:#eef1f8}
 .ph .cap{margin-top:4px;font-size:12px;opacity:.7}
 .ph .cap a{color:inherit}
+.pg .ins{font-size:10pt;margin:0 0 6px}
+.pg .bank{border:1.5px dashed #555;border-radius:6px;padding:5px 8px;margin:4px 0 6px;font-size:9.5pt}
+.pg .bank .bk{display:flex;flex-wrap:wrap;gap:2px 14px;margin-top:3px}
+.pg ol.mk{columns:2;column-gap:20px;font-size:11pt;line-height:1.7;margin:8px 0 0;padding-left:22px}
+.pg .gray{color:#555;font-size:9pt}
+.pg .mt{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;align-items:start}
+.pg .mt td.ans{width:2.2cm;text-align:center;font-weight:700}
+.pg ol.cd{font-size:10.5pt;line-height:1.9;padding-left:20px;margin:8px 0}
+.pg .ln{display:inline-block;min-width:3.2cm;border-bottom:1px solid #000;padding:0 4px;font-weight:600;line-height:1.3}
+.pg .ln.w{min-width:11cm}.pg .ln.s{min-width:1cm;text-align:center}
+.pg table.memt{border-collapse:collapse;margin:4px 0;width:auto}.pg table.memt td{border:1px solid #999;padding:2px 10px;text-align:center;height:auto;font-size:9.5pt}
+.pg .mcx{margin-right:14px}
+.pg ul.tfl{margin:2px 0 0;padding-left:18px;line-height:1.6}
 .foot{margin-top:auto;font-size:12px;opacity:.6;line-height:1.4}
 :focus-visible{outline:3px solid #ffb703;outline-offset:2px}
 #sheet{display:none;color:#000;font-family:Arial,Helvetica,sans-serif}
@@ -254,27 +267,6 @@ function compEnd(){clearInterval(S.tm);clearTimeout(S.to);S.live=false;S.lock=tr
  postScore({id,n:S.name,s:c.ok,b:c.bad,r:rk()}).then(()=>refreshLB(id))}
 
 /* ---- pracovný list ---- */
-function printIntro(){clear();resetView();svg.dataset.layer=S.th;
- card.innerHTML=`<div class="q">Pracovný list na tlač</div>${themeChips()}<p class="ans">Slepá mapa Slovenska s očíslovanými položkami a tabuľka na doplnenie.</p>${S.th==='kraje'?'<label class="optl"><input type="checkbox" id="optcap" checked>Aj krajské mesto</label>':''}<label class="optl"><input type="checkbox" id="optkey" checked>Učiteľský kľúč na 2. strane</label><button class="primary" id="doprint">Vytlačiť / uložiť ako PDF</button><p class="hint">Vo výbere tlačiarne zvoľ A4 na výšku. Číslovanie ide od západu na východ.</p>`}
-function sheetMap(ids,solved){const fs=15;
- let s=`<svg viewBox="${V0.join(' ')}" preserveAspectRatio="xMidYMid meet"><rect width="${V0[2]}" height="${V0[3]}" fill="#fff"/>`;
- D.nb.forEach(n=>s+=`<path d="${n.d}" fill="#eee" stroke="#bbb" stroke-width=".6" vector-effect="non-scaling-stroke"/>`);
- const t=FA[ids[0]].t;
- D.kraje.forEach(k=>s+=`<path d="${k.d}" fill="${t==='kraje'&&solved?k.col:'#fff'}" stroke="#444" stroke-width="${t==='kraje'?1:.7}" vector-effect="non-scaling-stroke"/>`);
- const ts=`font-size:${fs}px;font-weight:700;fill:#111;paint-order:stroke;stroke:#fff;stroke-width:${fs*.28}px;stroke-linejoin:round`;
- ids.forEach((id,i)=>{const f=FA[id],n=i+1;
-  if(f.t==='kraje')s+=`<text x="${f.lx}" y="${f.ly}" text-anchor="middle" dominant-baseline="central" style="${ts}">${n}</text>`;
-  else if(f.t==='rieky')s+=`<path d="${f.d}" fill="none" stroke="#1f78d1" stroke-width="2.4" vector-effect="non-scaling-stroke"/><text x="${f.lx}" y="${f.ly}" text-anchor="middle" style="${ts}">${n}</text>`;
-  else s+=`<circle cx="${f.x}" cy="${f.y}" r="3.6" fill="${f.t==='pohoria'?'#7a5a40':f.t==='mesta'?'#d63a34':f.t==='hrady'?'#7b4fa3':f.t==='unesco'?'#e0a100':f.t==='jaskyne'?'#3b3b3b':'#2d7d46'}" stroke="#fff"/><text x="${f.x+6}" y="${f.y-4}" style="${ts}">${n}</text>`});
- return s+'</svg>'}
-function sheetTable(ids,cap,solved){
- const rows=ids.map((id,i)=>`<tr><td class="n">${i+1}</td><td>${solved?FA[id].n:''}</td>${cap?`<td>${solved?FA[id].cap:''}</td>`:''}</tr>`);
- const half=rows.length>22?Math.ceil(rows.length/2):rows.length,head=`<tr><th>č.</th><th>Názov</th>${cap?'<th>Krajské mesto</th>':''}</tr>`,tb=r=>`<table>${head}${r.join('')}</table>`;
- return `<div class="tbls" style="grid-template-columns:${rows.length>half?'1fr 1fr':'1fr'}">${tb(rows.slice(0,half))}${rows.length>half?tb(rows.slice(half)):''}</div>`}
-function buildSheet(){const ids=items(S.th).sort((a,b)=>FA[a].lx-FA[b].lx),cap=!!($('#optcap')&&$('#optcap').checked),key=$('#optkey').checked,big=ids.length>22;
- const page=sol=>`<section class="pg" style="--rh:${big?'.52cm':'.8cm'}"><h2>Slepá mapa Slovenska – ${TH[S.th]}${sol?' (riešenie)':''}</h2><div class="who">${sol?'Učiteľský kľúč':'Meno: ______________________ &nbsp; Trieda: ________ &nbsp; Dátum: ____________'}</div>${sheetMap(ids,sol)}${sheetTable(ids,cap,sol)}</section>`;
- $('#sheet').innerHTML=page(false)+(key?page(true):'')}
-
 /* ---- ovládanie ---- */
 function start(){clearInterval(S.tm);clearTimeout(S.to);S.live=false;S.sub='';
  svg.removeAttribute('data-on');lyRemoveLabels();if(S.m==='layers')svg.removeAttribute('data-layer');else svg.dataset.layer=S.m==='comp'||S.m==='print'?S.th:S.m;clear();resetView();
@@ -310,6 +302,14 @@ const CFG={title:'Mapa Slovenska – vlastný výber',start:['kraje','rieky'],
  photo:it=>phHolder(it.id),afterInfo:it=>showPhoto(it.id),
  apply(L){if(L.on.has('kraje'))svg.dataset.layer='kraje';else svg.removeAttribute('data-layer')}};
 const EXPCFG={keys:Object.keys(TH).map(k=>'sk-'+k),label:k=>TH[k.slice(3)],file:'slovensko'};
+const WSCOL={mesta:'#d63a34',pohoria:'#7a5a40',nizine:'#6aa84f',np:'#2d7d46',hrady:'#7b4fa3',unesco:'#e0a100',jaskyne:'#3b3b3b'};
+const WSCFG={name:'Slovenska',V0:D.vb,initTheme:()=>S.th,onTheme:t=>{S.th=t;svg.dataset.layer=t},
+ themes:Object.keys(TH).map(t=>({id:t,label:TH[t],kind:t==='kraje'?'poly':t==='rieky'?'line':'pt',fit:false,cap:t==='kraje',capLabel:'Krajské mesto',head:t==='kraje'?'Kraj':'Názov',color:WSCOL[t],
+  items:()=>D[t].map(x=>({id:x.id,n:x.n,cap:x.cap,lx:x.lx,ly:x.ly,x:x.x,y:x.y,d:x.d}))})),
+ base(th,poolIds,solved,focusIds){let s='';
+  D.nb.forEach(n=>s+=`<path d="${n.d}" fill="#eee" stroke="#bbb" stroke-width=".6" vector-effect="non-scaling-stroke"/>`);
+  D.kraje.forEach(k=>s+=`<path d="${k.d}" fill="${th.id==='kraje'&&solved&&focusIds.includes(k.id)?k.col:'#fff'}" stroke="#444" stroke-width="${th.id==='kraje'?1:.7}" vector-effect="non-scaling-stroke"/>`);
+  return s}};
 /* ===== Vlastná mapa: postupné zapínanie vrstiev (spoločný kód) ===== */
 const LY={on:new Set(CFG.start),labels:false,sel:null,base:'color',cnames:false};
 function lySym(l){
@@ -421,6 +421,123 @@ async function showPhoto(id){
  const src=p.file?'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(p.file):'https://sk.wikipedia.org/wiki/'+encodeURIComponent(p.title);
  box.innerHTML=`<img alt="Fotografia: ${esc(it.n)}" src="${esc(p.src)}"><div class="cap">Foto: <a href="${esc(src)}" target="_blank" rel="noopener">Wikimedia Commons</a> (autor a licencia na stránke súboru)</div>`;
  const im=box.querySelector('img');im.onerror=()=>box.remove()}
+
+/* ===== Pracovné listy a slepé mapy (spoločný modul) ===== */
+const WS={type:'blank',theme:null,cap:true,key:true,n:10,country:'SVK'};
+const WTYPES={
+ blank:'Slepá mapa s číslami a tabuľkou',
+ bank:'Slepá mapa s bankou slov',
+ mark:'Označ na mape (žiak hľadá sám)',
+ match:'Spoj názov s hlavným mestom',
+ card:'Karta štátu na doplnenie'};
+const wsTheme=()=>WSCFG.themes.find(t=>t.id===WS.theme)||WSCFG.themes[0];
+function wsTypes(th){
+ const t=[['blank',WTYPES.blank],['bank',WTYPES.bank],['mark',WTYPES.mark]];
+ if(th.cap)t.push(['match',th.capLabel==='Krajské mesto'?'Spoj kraj s krajským mestom':'Spoj štát s hlavným mestom']);
+ if(WSCFG.card&&th.id==='staty')t.push(['card',WTYPES.card]);
+ return t}
+const wsSort=a=>[...a].sort((p,q)=>(p.lx??p.x)-(q.lx??q.x));
+function pathBox(d){const n=(d.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(let i=0;i+1<n.length;i+=2){x0=Math.min(x0,n[i]);x1=Math.max(x1,n[i]);y0=Math.min(y0,n[i+1]);y1=Math.max(y1,n[i+1])}return[x0,y0,x1,y1]}
+function wsView(th,items,ar){
+ let b;
+ if(th.kind==='poly'&&th.fit&&items.length){b=[1e9,1e9,-1e9,-1e9];items.forEach(it=>{const q=pathBox(it.d);b=[Math.min(b[0],q[0]),Math.min(b[1],q[1]),Math.max(b[2],q[2]),Math.max(b[3],q[3])]})}
+ else b=[WSCFG.V0[0],WSCFG.V0[1],WSCFG.V0[0]+WSCFG.V0[2],WSCFG.V0[1]+WSCFG.V0[3]];
+ let x0=b[0],y0=b[1],w=b[2]-b[0],h=b[3]-b[1];const pad=Math.max(w,h)*.05;x0-=pad;y0-=pad;w+=2*pad;h+=2*pad;
+ if(w/h<ar){const nw=h*ar;x0-=(nw-w)/2;w=nw}else{const nh=w/ar;y0-=(nh-h)/2;h=nh}
+ return{x0,y0,w,h}}
+/* mapa: items = položky, mode: 'num' (číslované), 'none' (bez značiek); solved = farebné riešenie */
+function wsMap(th,pool,items,{ar,numbered,solved}){
+ const v=wsView(th,pool.length&&th.kind==='poly'?pool:items,ar),fs=Math.max(v.w,v.h)/55;
+ let s=`<svg viewBox="${v.x0} ${v.y0} ${v.w} ${v.h}" preserveAspectRatio="xMidYMid meet"><rect x="${v.x0}" y="${v.y0}" width="${v.w}" height="${v.h}" fill="#fff"/>`;
+ s+=WSCFG.base(th,pool.map(x=>x.id),solved,items.map(x=>x.id));
+ const ts=`font-size:${fs}px;font-weight:700;fill:#111;paint-order:stroke;stroke:#fff;stroke-width:${fs*.26}px;stroke-linejoin:round`;
+ items.forEach((it,i)=>{const n=numbered?i+1:'';
+  if(th.kind==='line'){s+=`<path d="${it.d}" fill="none" stroke="${solved?'#1f78d1':'#1f78d1'}" stroke-width="2.4" vector-effect="non-scaling-stroke"/>`+(n?`<text x="${it.lx}" y="${it.ly}" text-anchor="middle" style="${ts}">${n}</text>`:'')}
+  else if(th.kind==='pt'||it.micro){s+=`<circle cx="${it.x}" cy="${it.y}" r="${fs*.3}" fill="${th.color||'#111'}" stroke="#fff"/>`+(n?`<text x="${it.x+fs*.5}" y="${it.y-fs*.3}" style="${ts}">${n}</text>`:'')}
+  else if(n)s+=`<text x="${it.lx}" y="${it.ly}" text-anchor="middle" dominant-baseline="central" style="${ts}">${n}</text>`});
+ return s+'</svg>'}
+const wsWho=sol=>sol?'Učiteľský kľúč':'Meno: ______________________ &nbsp; Trieda: ________ &nbsp; Dátum: ____________';
+function wsTable(items,{cap,capLabel,solved,head,stCol}){
+ const rows=items.map((it,i)=>`<tr><td class="n">${i+1}</td><td>${solved?esc(it.n):''}</td>${stCol?`<td>${solved?esc(it.st||''):''}</td>`:''}${cap?`<td>${solved?esc(it.cap||''):''}</td>`:''}</tr>`);
+ const half=rows.length>22?Math.ceil(rows.length/2):rows.length;
+ const hd=`<tr><th>č.</th><th>${head}</th>${stCol?'<th>Štát</th>':''}${cap?`<th>${capLabel}</th>`:''}</tr>`,tb=r=>`<table>${hd}${r.join('')}</table>`;
+ return `<div class="tbls" style="grid-template-columns:${rows.length>half?'1fr 1fr':'1fr'}">${tb(rows.slice(0,half))}${rows.length>half?tb(rows.slice(half)):''}</div>`}
+function wsBank(names){
+ return `<div class="bank"><b>Banka slov:</b><div class="bk">${[...names].sort((a,b)=>a.localeCompare(b,'sk')).map(n=>`<span>${esc(n)}</span>`).join('')}</div></div>`}
+const wsRowH=n=>n>22?'.52cm':'.8cm';
+const wsMH=n=>n>22?['11.5cm',1.57]:['14.5cm',1.24];
+function wsPageHead(title,sol){return `<h2>${title}${sol?' (riešenie)':''}</h2><div class="who">${wsWho(sol)}</div>`}
+/* ---- typy listov ---- */
+function wsBlank(th,pool,items,bank,sol){
+ const [mh,ar]=wsMH(items.length),cap=WS.cap&&th.cap&&!bank;
+ let h=`<section class="pg" style="--mh:${mh};--rh:${wsRowH(items.length)}">${wsPageHead(`Slepá mapa ${WSCFG.name} – ${th.label}${bank&&!sol?' (s bankou slov)':''}`,sol)}`;
+ h+=wsMap(th,pool,items,{ar,numbered:true,solved:sol});
+ if(bank&&!sol)h+=wsBank(items.map(i=>i.n));
+ h+=wsTable(items,{cap,capLabel:th.capLabel,solved:sol,head:th.head,stCol:th.stCol&&sol});
+ return h+'</section>'}
+function wsMark(th,pool,pick,sol){
+ const ins={poly:'Vyfarbi na mape každý z týchto objektov a k označenému miestu napíš jeho číslo.',line:'Zvýrazni na mape farbou každú z týchto riek a k čiare napíš jej číslo.',pt:'Zakresli na mape bodku pre každé z týchto miest a k bodke napíš jej číslo.'}[th.kind];
+ const items=th.kind==='poly'?pick:pick;
+ let h=`<section class="pg" style="--mh:14cm;--rh:.8cm">${wsPageHead(`Označ na mape – ${WSCFG.name}: ${th.label}`,sol)}<p class="ins">${ins}</p>`;
+ h+=wsMap(th,pool,sol?pick:[],{ar:1.28,numbered:sol,solved:sol});
+ h+=`<ol class="mk">${pick.map(it=>`<li>${esc(it.n)}${th.stCol?` <span class="gray">(${esc(it.st||'')})</span>`:''}</li>`).join('')}</ol></section>`;
+ return h}
+function wsMatch(th,pick,right,sol){
+ const letters='ABCDEFGHIJKLMNOPQRST';
+ const rows=pick.map((it,i)=>`<tr><td class="n">${i+1}</td><td>${esc(it.n)}</td><td class="ans">${sol?letters[right.indexOf(it.cap)]:'&nbsp;'}</td></tr>`).join('');
+ const rr=right.map((c,i)=>`<tr><td class="n">${letters[i]}</td><td>${esc(c)}</td></tr>`).join('');
+ return `<section class="pg" style="--rh:.9cm">${wsPageHead(`${th.capLabel==='Krajské mesto'?'Spoj kraj s krajským mestom':'Spoj štát s hlavným mestom'} – ${WSCFG.name}`,sol)}<p class="ins">K názvu napíš písmeno správneho mesta.</p><div class="mt"><table><tr><th>č.</th><th>${th.head}</th><th>Písmeno</th></tr>${rows}</table><table><tr><th>&nbsp;</th><th>${th.capLabel}</th></tr>${rr}</table></div></section>`}
+/* ---- karta štátu (Európa) ---- */
+function wsCard(k,seed,sol){
+ const c=D.c[k],p=c.pr;if(!p)return '<section class="pg"><p>Pre tento štát zatiaľ nie je karta.</p></section>';
+ const row=n=>(p.zakl.find(r=>r[0]===n)||[n,''])[1];
+ const mem=Object.entries(MEM).map(([id,v])=>[v[0],v[1].includes(k)]);
+ const mc=(label,key)=>{const ans=row(key);const others=sh(K.filter(x=>x!==k&&D.c[x].pr)).map(x=>(D.c[x].pr.zakl.find(r=>r[0]===key)||[0,''])[1]).filter(x=>x&&x!==ans&&x.length<40).slice(0,2);
+  if(ans.length>=40||others.length<2)return '';const opts=seed[key]||(seed[key]=sh([ans,...others]));const L='abc';
+  return `<li>${label}: ${opts.map((o,i)=>`<span class="mcx">${sol&&o===ans?'<b>':''}${L[i]}) ${esc(o)}${sol&&o===ans?' ✓</b>':''}</span>`).join(' ')}</li>`};
+ const places=p.miesta.map(x=>x[0]);
+ const tf=seed.tf||(seed.tf=sh([
+   ...sh(places).slice(0,2).map(n=>({n,ok:true})),
+   ...sh(K.filter(x=>x!==k&&D.c[x].pr)).slice(0,2).map(x=>({n:sh(D.c[x].pr.miesta.map(m=>m[0]))[0],ok:false}))]));
+ const mapSvg=wsMap({id:'card',kind:'poly',fit:false},K.map(x=>({id:x})),[{id:k,lx:c.lx,ly:c.ly,micro:false}],{ar:1.9,numbered:false,solved:true});
+ let h=`<section class="pg" style="--mh:6.2cm">${wsPageHead(`Karta štátu: ${esc(c.n)}`,sol)}`+mapSvg.replace('</svg>',`</svg>`);
+ h+=`<ol class="cd"><li>Doplň: hlavné mesto <span class="ln">${sol?esc(c.cap):''}</span>, úradný jazyk <span class="ln">${sol?esc(row('Úradný jazyk')):''}</span>, mena <span class="ln">${sol?esc(row('Mena')):''}</span>.</li>`;
+ h+=`<li>Zakrúžkuj, či je štát členom: <table class="memt"><tr>${mem.map(([n,ok])=>`<td><b>${n}</b><br>${sol?(ok?'<b>✓ ÁNO</b>':'<b>✓ NIE</b>'):'ÁNO &nbsp; NIE'}</td>`).join('')}</tr></table></li>`;
+ h+=mc('Vyber správny počet obyvateľov','Obyvatelia')+mc('Vyber správnu rozlohu','Rozloha');
+ h+=`<li>Pravda (P) alebo nepravda (N)? Miesto leží v tomto štáte:<ul class="tfl">${tf.map(t=>`<li>${esc(t.n)} <span class="ln s">${sol?(t.ok?'P':'N'):''}</span></li>`).join('')}</ul></li>`;
+ h+=`<li>Napíš dve zaujímavé miesta v tomto štáte: <span class="ln w">${sol?esc(places.slice(0,2).join(', ')):''}</span></li>`;
+ h+=`<li>Čím je krajina známa? <span class="ln w">${sol?esc(p.zname[0]):''}</span></li></ol></section>`;
+ return h}
+/* ---- zostavenie ---- */
+function buildSheet(){
+ const th=wsTheme(),pool=wsSort(th.items()),key=WS.key;let seed={};
+ const pick=()=>sh(pool).slice(0,Math.min(WS.n,pool.length));
+ let pages='';
+ if(WS.type==='blank'||WS.type==='bank'){const b=WS.type==='bank',its=pool;pages=wsBlank(th,pool,its,b,false)+(key?wsBlank(th,pool,its,false,true):'')}
+ else if(WS.type==='mark'){const pk=wsSort(pick());pages=wsMark(th,pool,pk,false)+(key?wsMark(th,pool,pk,true):'')}
+ else if(WS.type==='match'){const pk=pick(),right=sh(pk.map(i=>i.cap));pages=wsMatch(th,pk,right,false)+(key?wsMatch(th,pk,right,true):'')}
+ else if(WS.type==='card'){pages=wsCard(WS.country,seed,false)+(key?wsCard(WS.country,seed,true):'')}
+ $('#sheet').innerHTML=pages}
+function printIntro(){
+ clear();resetView();
+ if(!WS.theme)WS.theme=(WSCFG.initTheme?WSCFG.initTheme():WSCFG.themes[0].id);
+ const th=wsTheme(),types=wsTypes(th);if(!types.some(t=>t[0]===WS.type))WS.type=types[0][0];
+ if(WSCFG.onTheme)WSCFG.onTheme(th.id);
+ const chips=WSCFG.themes.length>1?'<div class="chips">'+WSCFG.themes.map(t=>`<button class="chip" data-wst="${t.id}" aria-pressed="${t.id===th.id}">${t.label}</button>`).join('')+'</div>':'';
+ const desc={blank:'Slepá mapa s očíslovanými položkami a tabuľka, do ktorej žiaci dopíšu názvy.',bank:'To isté, ale pod mapou je banka slov, z ktorej žiaci názvy vyberajú. Vhodné pre mladších žiakov.',mark:'Mapa bez značiek a zoznam názvov. Žiak hľadá objekty v mape sám a označí ich.',match:'Dva stĺpce: názvy a mestá v pomiešanom poradí. Žiak spája písmenom.',card:'Údaje o jednom štáte na doplnenie, výber správnej odpovede a pravda alebo nepravda.'}[WS.type];
+ const showN=WS.type==='mark'||WS.type==='match';
+ card.innerHTML=`<div class="q">Pracovný list na tlač</div>${chips}<label class="nm">Typ listu<select id="wstype">${types.map(([v,l])=>`<option value="${v}"${v===WS.type?' selected':''}>${l}</option>`).join('')}</select></label><p class="ans">${desc}</p>`+
+  (WS.type==='blank'&&th.cap?`<label class="optl"><input type="checkbox" id="optcap"${WS.cap?' checked':''}><span>Aj ${th.capLabel.toLowerCase()}</span></label>`:'')+
+  (showN?`<label class="nm">Počet položiek<select id="wsn">${[6,8,10,12,15].map(n=>`<option${n===WS.n?' selected':''}>${n}</option>`).join('')}</select></label>`:'')+
+  (WS.type==='card'?`<label class="nm">Štát<select id="wscountry">${K.filter(k=>D.c[k].pr).sort((a,b)=>D.c[a].n.localeCompare(D.c[b].n,'sk')).map(k=>`<option value="${k}"${k===WS.country?' selected':''}>${D.c[k].n}</option>`).join('')}</select></label>`:'')+
+  `<label class="optl"><input type="checkbox" id="optkey"${WS.key?' checked':''}><span>Učiteľský kľúč na 2. strane</span></label><button class="primary" id="doprint">Vytlačiť / uložiť ako PDF</button><p class="hint">Vo výbere tlačiarne zvoľ A4 na výšku. Číslovanie ide od západu na východ.</p>`}
+card.addEventListener('click',e=>{if(S.m!=='print')return;const b=e.target.closest('button');if(!b||!b.dataset.wst)return;WS.theme=b.dataset.wst;printIntro()});
+card.addEventListener('change',e=>{if(S.m!=='print')return;const t=e.target;
+ if(t.id==='wstype'){WS.type=t.value;printIntro()}
+ else if(t.id==='wsn'){WS.n=+t.value}
+ else if(t.id==='wscountry'){WS.country=t.value}
+ else if(t.id==='optcap'){WS.cap=t.checked}
+ else if(t.id==='optkey'){WS.key=t.checked}});
 
 setVB();start();
 </script>
