@@ -332,7 +332,7 @@ function memEnd(){clear();resetView();const n=S.q.length;
  card.innerHTML=`<div class="meta"><span>Koniec kola</span></div><div class="score">${S.ok}<small> / ${n}</small></div><div class="msg">${S.ok===n?'Bezchybne!':S.ok>=n*.7?'Dobrá práca.':'Ešte si to precvičíme.'}</div>`+
  (S.bad.length?`<div>Zopakuj si:</div><ul class="miss">${S.bad.map(x=>`<li><b>${D.c[x.k].n}</b> – ${x.truth?'je':'nie je'} členom ${MEM[x.l][2]}</li>`).join('')}</ul>`:'')+
  `<div class="row"><button class="primary" id="memagain">Nové kolo</button><button class="primary alt" id="memback">Späť na mapu</button></div>`}
-function compIntro(){clear();resetView();card.innerHTML=`<div class="q">Súťaž na 60 sekúnd</div><p class="ans">Odpovedaj na čo najviac otázok. Za každú správnu odpoveď je bod. Otázky sa striedajú: nájdi štát, štát podľa mesta, hlavné mesto, vlajka.</p><label class="nm">Meno<input id="nm" maxlength="20" autocomplete="off" placeholder="Tvoje meno"></label><button class="primary" id="go">Štart</button>${lbHtml()}<div class="row"><button class="link" id="exp">Stiahnuť výsledky (CSV)</button><button class="link" id="clr">Vymazať rebríček</button></div>`;refreshLB()}
+function compIntro(){clear();resetView();card.innerHTML=`<div class="q">Súťaž na 60 sekúnd</div><p class="ans">Odpovedaj na čo najviac otázok. Za každú správnu odpoveď je bod. Otázky sa striedajú: nájdi štát, štát podľa mesta, hlavné mesto, vlajka.</p><label class="nm">Prezývka<input id="nm" maxlength="20" autocomplete="off" placeholder="Prezývka (nie celé meno)"></label><button class="primary" id="go">Štart</button>${lbHtml()}<div class="row"><button class="link" id="exp">Stiahnuť výsledky (CSV)</button><button class="link" id="clr">Vymazať rebríček</button></div>`;refreshLB()}
 function compStart(){const n=($('#nm').value||'').trim()||'Hráč';S.name=n;S.cs={ok:0,bad:0,end:Date.now()+60000,last:null};S.live=true;compNext();S.tm=setInterval(tick,200)}
 function tick(){const left=Math.max(0,S.cs.end-Date.now()),e=$('#tm'),b=$('#tb');if(e)e.textContent=Math.ceil(left/1000);if(b)b.style.width=left/600+'%';if(left<=0)compEnd()}
 function compNext(){if(!S.live)return;const pl=pool().filter(k=>k!==S.cs.last),k=pl[Math.random()*pl.length|0];S.cs.last=k;S.qt=['find','findcap','cap','flag'][Math.random()*4|0];S.q=[k];S.i=0;next()}
@@ -588,7 +588,7 @@ async function exportCSV(){
  if(!rows.length){alert('Zatiaľ nie sú žiadne výsledky.');return}
  rows.sort((a,b)=>EXPCFG.keys.indexOf(a.r)-EXPCFG.keys.indexOf(b.r)||b.s-a.s||a.b-b.b);
  const q=v=>{v=String(v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
- const lines=['Meno;Oblasť / téma;Body;Chyby;Dátum'].concat(rows.map(x=>[q(x.n),q(EXPCFG.label(x.r)),x.s,x.b,q(new Date(x.id).toLocaleString('sk-SK'))].join(';')));
+ const lines=['Prezývka;Oblasť / téma;Body;Chyby;Dátum'].concat(rows.map(x=>[q(x.n),q(EXPCFG.label(x.r)),x.s,x.b,q(new Date(x.id).toLocaleString('sk-SK'))].join(';')));
  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vysledky-'+EXPCFG.file+'-'+new Date().toISOString().slice(0,10)+'.csv';
  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}

@@ -274,7 +274,7 @@ async function refreshLB(hl){if(!API)return;try{const r=await fetch(`${API}/scor
 async function postScore(x){if(!API)return;try{await fetch(API+'/scores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(x)})}catch(e){}}
 const themeChips=()=>'<div class="chips">'+Object.entries(TH).map(([k,v])=>`<button class="chip" data-th="${k}" aria-pressed="${k===S.th}">${v}</button>`).join('')+'</div>';
 function compIntro(){clear();resetView();svg.dataset.layer=S.th;
- card.innerHTML=`<div class="q">Súťaž na 60 sekúnd</div>${themeChips()}<p class="ans">Odpovedaj na čo najviac otázok. Správna odpoveď = 1 bod.</p><label class="nm">Meno<input id="nm" maxlength="20" autocomplete="off" placeholder="Tvoje meno"></label><button class="primary" id="go">Štart</button>${lbHtml()}<div class="row"><button class="link" id="exp">Stiahnuť výsledky (CSV)</button><button class="link" id="clr">Vymazať rebríček</button></div>`;refreshLB()}
+ card.innerHTML=`<div class="q">Súťaž na 60 sekúnd</div>${themeChips()}<p class="ans">Odpovedaj na čo najviac otázok. Správna odpoveď = 1 bod.</p><label class="nm">Prezývka<input id="nm" maxlength="20" autocomplete="off" placeholder="Prezývka (nie celé meno)"></label><button class="primary" id="go">Štart</button>${lbHtml()}<div class="row"><button class="link" id="exp">Stiahnuť výsledky (CSV)</button><button class="link" id="clr">Vymazať rebríček</button></div>`;refreshLB()}
 function compStart(){S.name=($('#nm').value||'').trim()||'Hráč';S.cs={ok:0,bad:0,end:Date.now()+60000,last:null};S.live=true;compNext();S.tm=setInterval(tick,200)}
 function tick(){const left=Math.max(0,S.cs.end-Date.now()),e=$('#tm'),b=$('#tb');if(e)e.textContent=Math.ceil(left/1000);if(b)b.style.width=left/600+'%';if(left<=0)compEnd()}
 function compNext(){if(!S.live)return;const pl=items(S.th).filter(k=>k!==S.cs.last),k=pl[Math.random()*pl.length|0];S.cs.last=k;S.q=[k];S.qt=[pickType(k,S.th)];S.i=0;nextQ()}
@@ -404,7 +404,7 @@ async function exportCSV(){
  if(!rows.length){alert('Zatiaľ nie sú žiadne výsledky.');return}
  rows.sort((a,b)=>EXPCFG.keys.indexOf(a.r)-EXPCFG.keys.indexOf(b.r)||b.s-a.s||a.b-b.b);
  const q=v=>{v=String(v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
- const lines=['Meno;Oblasť / téma;Body;Chyby;Dátum'].concat(rows.map(x=>[q(x.n),q(EXPCFG.label(x.r)),x.s,x.b,q(new Date(x.id).toLocaleString('sk-SK'))].join(';')));
+ const lines=['Prezývka;Oblasť / téma;Body;Chyby;Dátum'].concat(rows.map(x=>[q(x.n),q(EXPCFG.label(x.r)),x.s,x.b,q(new Date(x.id).toLocaleString('sk-SK'))].join(';')));
  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vysledky-'+EXPCFG.file+'-'+new Date().toISOString().slice(0,10)+'.csv';
  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
