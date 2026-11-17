@@ -30,6 +30,8 @@ main{display:grid;grid-template-columns:1fr 370px;height:100%}
 .c.bad path,.c.bad .dot{fill:var(--bad);stroke:var(--ink);stroke-width:2}
 #cap{fill:var(--bad);stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:none;display:none}
 #ring{fill:none;stroke:var(--ink);stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none;display:none}
+#fbk{pointer-events:none}#fbk line{stroke:var(--bad);stroke-width:2.2;stroke-dasharray:5 4;vector-effect:non-scaling-stroke}
+#fbk .ck{fill:none;stroke:var(--bad);stroke-width:3.2;stroke-linecap:round;vector-effect:non-scaling-stroke}#fbk .ck.g{stroke:var(--ok)}#fbk .ck.y{stroke:#f0a500}#fbk .ch{fill:none;stroke:#fff;stroke-width:6.5;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .zoom{position:absolute;left:14px;bottom:14px;display:flex;flex-direction:column;gap:6px}
 .zoom button{width:42px;height:42px;border:0;border-radius:10px;background:#fff;color:var(--ink);font:700 20px var(--font);cursor:pointer;box-shadow:0 1px 4px #0003}
 aside{background:var(--deep);color:#fff;padding:22px 20px;display:flex;flex-direction:column;gap:16px;overflow:auto}
@@ -54,7 +56,7 @@ h1{margin:0;font-size:38px;line-height:1;font-weight:800;letter-spacing:-.02em}
 .choices button.ok{background:var(--ok);border-color:var(--ok);color:#fff}
 .choices button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
 .msg{font-size:20px;font-weight:700}
-.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
+.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}.msg.half{color:#b57a00}
 .ans,.hint{margin:0;font-size:17px;line-height:1.35}
 .hint{opacity:.65;font-size:15px}
 .primary{font:700 17px var(--font);padding:12px 18px;border:0;border-radius:12px;background:var(--deep);color:#fff;cursor:pointer;margin-top:6px}
@@ -250,12 +252,12 @@ h+='<g id="feat">';
 h+='<g id="L-mts">'+D.mt.map(m=>`<g class="f ar mt${m.id==='m_8'?' dk':''}" data-f="${m.id}"><path class="vis" d="${m.d}"/>${['m_8','m_9','m_12'].includes(m.id)?`<path class="hit" d="${m.d}"/>`:''}</g>`).join('')+'</g>';
 h+='<g id="L-rivers">'+D.rv.map(r=>`<g class="f rv" data-f="${r.id}"><path class="vis" d="${r.d}"/><path class="hit" d="${r.d}"/></g>`).join('')+'</g>';
 h+='<g id="L-cities">'+D.ct.map(m=>`<g class="f mk ct" data-f="${m.id}" data-x="${m.x}" data-y="${m.y}" data-s="3.2"><circle class="hit" r="2.4"/><circle class="vis" r="1"/></g>`).join('')+'</g>'+'<g id="L-water">'+D.wt.filter(w=>w.g==='poly').map(w=>`<g class="f wt" data-f="${w.id}"><path class="vis" d="${w.d}"/></g>`).join('')+D.wt.filter(w=>w.g==='line').map(w=>`<g class="f cn" data-f="${w.id}"><path class="vis" d="${w.d}"/><path class="hit" d="${w.d}"/></g>`).join('')+D.wt.filter(w=>w.g==='pt').map(w=>`<g class="f mk st" data-f="${w.id}" data-x="${w.x}" data-y="${w.y}" data-s="4.5"><circle class="hit" r="3"/><path class="vis" d="M0-1L1 0L0 1L-1 0Z"/></g>`).join('')+'</g>'+'<g id="L-caps">'+CP.map(m=>`<g class="f mk cp" data-f="${m.id}" data-x="${m.x}" data-y="${m.y}" data-s="3"><circle class="hit" r="2.4"/><circle class="vis" r="1"/></g>`).join('')+'</g></g>';
-h+='<circle id="ring" r="11"/><circle id="cap" r="4.5"/>';
+h+='<circle id="ring" r="11"/><circle id="cap" r="4.5"/><g id="fbk"></g>';
 svg.innerHTML=h;
 
 const V0=D.vb;let vb=[...V0];
 function setVB(){svg.setAttribute('viewBox',vb.join(' '));const f=Math.max(vb[2]/V0[2],.25);
- svg.querySelectorAll('.dot').forEach(e=>e.setAttribute('r',3.4*f));svg.querySelectorAll('.mk').forEach(e=>e.setAttribute('transform',`translate(${e.dataset.x} ${e.dataset.y}) scale(${e.dataset.s*f})`));$('#cap').setAttribute('r',4.5*f);$('#ring').setAttribute('r',11*f);if(typeof lyReflow==='function')lyReflow(f)}
+ svg.querySelectorAll('.dot').forEach(e=>e.setAttribute('r',3.4*f));svg.querySelectorAll('.mk').forEach(e=>e.setAttribute('transform',`translate(${e.dataset.x} ${e.dataset.y}) scale(${e.dataset.s*f})`));$('#cap').setAttribute('r',4.5*f);$('#ring').setAttribute('r',11*f);svg.querySelectorAll('#fbk [data-x]').forEach(e=>e.setAttribute('transform',`translate(${e.dataset.x} ${e.dataset.y}) scale(${f})`));if(typeof lyReflow==='function')lyReflow(f)}
 const resetView=()=>{vb=[...V0];setVB()};
 function zoom(f,cx,cy){const w=Math.min(V0[2]*1.2,Math.max(30,vb[2]*f)),r=w/vb[2];vb=[cx-(cx-vb[0])*r,cy-(cy-vb[1])*r,w,vb[3]*r];setVB()}
 function zoomTo(x,y,w){const hh=w*V0[3]/V0[2];vb=[x-w/2,y-hh/2,w,hh];setVB()}
@@ -270,7 +272,7 @@ window.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-dra
  if(!drag.moved&&Math.hypot(dx,dy)<6)return;drag.moved=true;svg.classList.add('drag');
  const s=svg.getScreenCTM().a;vb[0]-=dx/s;vb[1]-=dy/s;drag.x=e.clientX;drag.y=e.clientY;setVB()});
 window.addEventListener('pointerup',e=>{if(!drag)return;const moved=drag.moved;drag=null;svg.classList.remove('drag');
- if(moved||!svg.contains(e.target))return;const g=e.target.closest('.c'),ft=e.target.closest('.f');mapClick(g?g.dataset.k:null,ft?ft.dataset.f:null)});
+ if(moved||!svg.contains(e.target))return;const g=e.target.closest('.c'),ft=e.target.closest('.f');mapClick(g?g.dataset.k:null,ft?ft.dataset.f:null,pt(e))});
 
 let S={m:'study',r:'all',q:[],i:0,ok:0,bad:[],lock:false,live:false};
 const TY=()=>S.m==='comp'?S.qt:S.m;
@@ -292,20 +294,49 @@ function fIntro(){clear();resetView();S.sub='';const L=FL(S.m);
  card.innerHTML=`<div class="q">${FT[S.m]}</div><p class="ans">${S.m==='water'?'Klikni na plochu mora, značku prielivu alebo čiaru prieplavu a zobrazí sa názov.':`Klikni na ${S.m==='mts'?'pohorie':'značku'}${S.m==='rivers'?' alebo čiaru':''} a zobrazí sa názov.`}</p><button class="primary" id="fquiz">Kvíz na 10 otázok</button><p class="hint">Na mape je ${L.length}: ${L.map(x=>x.n).sort((a,b)=>a.localeCompare(b,'sk')).join(', ')}.</p>`}
 function fExplore(id){clear();if(!id||!FA[id])return fIntro();FEL(id).classList.add('hl');fMark(id);
  card.innerHTML=`<div class="q"><b>${fName(FA[id])}</b></div>${FA[id].i?`<p class="ans">${FA[id].i}</p>`:''}${phHolder(id)}<p class="hint">${S.m==='mts'?'Klikni na ďalšie pohorie.':'Klikni na ďalšiu značku.'}</p><button class="primary" id="fquiz">Kvíz na 10 otázok</button>`;showPhoto(id)}
-function fQuiz(){clear();resetView();S.sub='quiz';S.q=sh(FL(S.m).map(x=>x.id)).slice(0,10);S.qf=S.q.map(()=>Math.random()<.5?'find':'name');S.i=0;S.ok=0;S.bad=[];fNext()}
+function fQuiz(){clear();resetView();S.sub='quiz';S.q=sh(FL(S.m).map(x=>x.id)).slice(0,10);S.qf=S.q.map(()=>Math.random()<.5?'find':'name');S.i=0;S.ok=0;S.bad=[];S.fd=[];fNext()}
 function fNext(){clear();S.lock=false;const id=S.q[S.i],f=FA[id],ty=S.qf[S.i];let q,ch='';
- if(ty==='find')q=`Nájdi na mape: <b>${f.n}</b>`;
+ if(ty==='find')q=`Nájdi na mape: <b>${f.n}</b><div class="hint" style="margin-top:8px;font-weight:500">Klikni čo najbližšie, počíta sa vzdialenosť.</div>`;
  else{FEL(id).classList.add('hl');fMark(id);q=S.m==='rivers'?'Ako sa volá táto rieka?':S.m==='mts'?'Ako sa volá toto pohorie?':S.m==='water'?'Ako sa volá tento vodný útvar?':'Ako sa volá toto mesto?';
   ch='<div class="choices">'+sh([id,...sh(FL(S.m).filter(x=>x.id!==id)).slice(0,3).map(x=>x.id)]).map(o=>`<button data-fo="${o}">${FA[o].n}</button>`).join('')+'</div>'}
- card.innerHTML=`<div class="meta"><span>Otázka ${S.i+1} / ${S.q.length}</span><span>Správne: ${S.ok}</span></div><div class="bar"><i style="width:${S.i/S.q.length*100}%"></i></div><div class="q">${q}</div>${ch}<div id="fb"></div>`}
+ card.innerHTML=`<div class="meta"><span>Otázka ${S.i+1} / ${S.q.length}</span><span>Body: ${fmt(S.ok)}</span></div><div class="bar"><i style="width:${S.i/S.q.length*100}%"></i></div><div class="q">${q}</div>${ch}<div id="fb"></div>`}
 function fAnswer(sel){if(S.lock)return;S.lock=true;const id=S.q[S.i],f=FA[id],ok=sel===id,ty=S.qf[S.i];
  FEL(id).classList.add('ok');fMark(id);if(!ok&&ty==='find')FEL(sel).classList.add('bad');
  card.querySelectorAll('[data-fo]').forEach(b=>{b.disabled=true;if(b.dataset.fo===id)b.classList.add('ok');else if(b.dataset.fo===sel)b.classList.add('bad')});
  ok?S.ok++:S.bad.push(id);
  $('#fb').innerHTML=`<div class="msg ${ok?'ok':'bad'}">${ok?'Správne!':(ty==='find'?'Nie, to je '+FA[sel].n+'.':'Nie.')}</div><p class="ans"><b>${fName(f)}</b></p>${f.i?`<p class="hint">${f.i}</p>`:''}${phHolder(id)}<button class="primary" id="fnext">${S.i+1<S.q.length?'Ďalej':'Výsledok'}</button>`;showPhoto(id);$('#fnext').focus()}
+/* ---- hodnotenie podľa vzdialenosti (kvíz „Nájdi na mape“) ---- */
+const fmt=v=>String(Math.round(v*10)/10).replace('.',',');
+const KMPX=1/0.1508;                     /* mierka mapy: 1 px = približne 6,6 km */
+const kmTxt=km=>km<1?'menej než 1 km':Math.round(km)+' km';
+const gKind=f=>f.t==='mts'||(f.t==='water'&&f.g==='poly')?'area':(f.t==='rivers'||(f.t==='water'&&f.g==='line'))?'line':'pt';
+const gTol=f=>f.t==='cities'?[60,150]:f.t==='rivers'?[50,120]:f.t==='mts'?[0,100]:f.g==='poly'?[0,100]:f.g==='line'?[30,80]:[50,120]; /* [plný bod do km, pol bodu do km]; plochy: plný bod = klik vo vnútri */
+function geoDist(id,p){const f=FA[id],k=gKind(f);
+ if(k==='pt')return{d:Math.hypot(f.x-p.x,f.y-p.y),near:{x:f.x,y:f.y}};
+ const el=FEL(id).querySelector('.vis');
+ if(k==='area'&&el.isPointInFill(new DOMPoint(p.x,p.y)))return{d:0,inside:true};
+ const L=el.getTotalLength(),n=Math.min(2500,Math.max(80,Math.ceil(L/1.2)));let best=1e9,bp=null;
+ for(let i=0;i<=n;i++){const q=el.getPointAtLength(L*i/n),dd=Math.hypot(q.x-p.x,q.y-p.y);if(dd<best){best=dd;bp=q}}
+ return{d:best,near:{x:bp.x,y:bp.y}}}
+function fAnswerPos(p,fc){if(S.lock)return;S.lock=true;
+ const id=S.q[S.i],f=FA[id],r=geoDist(id,p),km=r.d*KMPX,[a,b]=gTol(f);
+ const pts=(r.inside||km<=a)?1:km<=b?.5:0;
+ const tx=r.near?r.near.x:p.x,ty=r.near?r.near.y:p.y;
+ const out=(x,y)=>x<vb[0]||y<vb[1]||x>vb[0]+vb[2]||y>vb[1]+vb[3];
+ if(out(p.x,p.y)||out(tx,ty))resetView();
+ FEL(id).classList.add('ok');fMark(id);
+ const sc=Math.max(vb[2]/V0[2],.25);
+ $('#fbk').innerHTML=(!r.inside&&pts<1?`<line x1="${p.x}" y1="${p.y}" x2="${tx}" y2="${ty}"/>`:'')+['ch','ck '+(pts>=1?'g':pts>0?'y':'')].map(c=>`<path class="${c}" data-x="${p.x}" data-y="${p.y}" transform="translate(${p.x} ${p.y}) scale(${sc})" d="M-5-5L5 5M-5 5L5-5"/>`).join('');
+ S.ok+=pts;if(pts<1)S.bad.push(id);S.fd.push(r.inside?0:km);
+ const kl=(fc&&FA[fc]&&fc!==id&&FA[fc].t===f.t)?` Klikol si na: ${FA[fc].n}.`:'';
+ let msg,cls;
+ if(pts===1){cls='ok';msg=r.inside?'Správne! Trafil si.':(km<1?'Správne! Trafil si presne.':`Správne! Bol si od cieľa len ${kmTxt(km)}.`)}
+ else if(pts>0){cls='half';msg=`Skoro! Bol si ${kmTxt(km)} od cieľa. (0,5 bodu)`}
+ else{cls='bad';msg=`Netrafil si. Od cieľa ťa delilo ${kmTxt(km)}.${kl}`}
+ $('#fb').innerHTML=`<div class="msg ${cls}">${msg}</div><p class="ans"><b>${fName(f)}</b></p>${f.i?`<p class="hint">${f.i}</p>`:''}${phHolder(id)}<button class="primary" id="fnext">${S.i+1<S.q.length?'Ďalej':'Výsledok'}</button>`;showPhoto(id);$('#fnext').focus()}
 function fEnd(){clear();resetView();const n=S.q.length;
- card.innerHTML=`<div class="meta"><span>Koniec kola</span></div><div class="score">${S.ok}<small> / ${n}</small></div><div class="msg">${S.ok===n?'Bezchybne!':S.ok>=n*.7?'Dobrá práca.':'Ešte si to precvičíme.'}</div>`+
- (S.bad.length?`<div>Zopakuj si:</div><ul class="miss">${S.bad.map(id=>`<li><b>${fName(FA[id])}</b></li>`).join('')}</ul>`:'')+
+ card.innerHTML=`<div class="meta"><span>Koniec kola</span></div><div class="score">${fmt(S.ok)}<small> / ${n}</small></div><div class="msg">${S.ok===n?'Bezchybne!':S.ok>=n*.7?'Dobrá práca.':'Ešte si to precvičíme.'}</div>`+
+ (S.fd&&S.fd.length?`<p class="hint">Priemerná vzdialenosť pri hľadaní na mape: <b>${kmTxt(S.fd.reduce((a,b)=>a+b,0)/S.fd.length)}</b></p>`:'')+(S.bad.length?`<div>Zopakuj si:</div><ul class="miss">${S.bad.map(id=>`<li><b>${fName(FA[id])}</b></li>`).join('')}</ul>`:'')+
  `<div class="row"><button class="primary" id="fagain">Nové kolo</button><button class="primary alt" id="fback">Späť na mapu</button></div>`}
 const sp=s=>s.split(' ');
 const MEM={
@@ -342,7 +373,7 @@ const sh=a=>{a=[...a];for(let i=a.length;i>1;){const j=Math.random()*i--|0;[a[i]
 const pool=()=>REG[S.r][1].filter(k=>D.c[k]);
 const G=k=>svg.querySelector('[data-k="'+k+'"]');
 function place(id,c){const e=$('#'+id);e.setAttribute('cx',c.x);e.setAttribute('cy',c.y);e.style.display='block'}
-function clear(){svg.querySelectorAll('.c path,.c .dot').forEach(e=>e.style.fill='');svg.classList.remove('dim');svg.querySelectorAll('.c,.f').forEach(g=>g.classList.remove('hl','ok','bad'));$('#cap').style.display=$('#ring').style.display='none'}
+function clear(){const fk=$('#fbk');if(fk)fk.innerHTML='';svg.querySelectorAll('.c path,.c .dot').forEach(e=>e.style.fill='');svg.classList.remove('dim');svg.querySelectorAll('.c,.f').forEach(g=>g.classList.remove('hl','ok','bad'));$('#cap').style.display=$('#ring').style.display='none'}
 function intro(){clear();card.innerHTML='<div class="q">Klikni na ľubovoľný štát.</div><p class="ans">Zobrazí sa jeho názov a hlavné mesto.</p><p class="hint">Mapu približuješ kolieskom myši alebo tlačidlami +/−, posúvaš ju ťahaním. Malé štáty (Monako, Vatikán, San Maríno…) sú označené bodkou.</p>'}
 function start(){clearInterval(S.tm);clearTimeout(S.to);S.live=false;S.sub='';svg.removeAttribute('data-on');lyRemoveLabels();if(isF(S.m))svg.dataset.layer=S.m;else svg.removeAttribute('data-layer');clear();resetView();$('#reg').disabled=S.m==='study'||S.m==='member';
  if(S.m==='clues')return clStart();
@@ -440,10 +471,10 @@ function clEnd(){clear();resetView();const mx=CL.max;
   `<ul class="miss">${CL.res.map(r=>`<li><b>${D.c[r.k].n}</b> – ${r.pts} ${r.pts===1?'bod':r.pts>0&&r.pts<5?'body':'bodov'}</li>`).join('')}</ul>`+
   `<div class="row"><button class="primary" id="clagain">Nové kolo</button></div>`}
 function clClick(k){if(CL&&!CL.lock&&S.m==='clues'&&k)clGuess(k)}
-function mapClick(k,f){
+function mapClick(k,f,p){
  if(S.m==='layers')return lyClick(k,f);
  if(S.m==='clues')return clClick(k);
- if(isF(S.m)){if(S.sub==='quiz'){if(S.qf[S.i]==='find'&&f&&FA[f]&&FA[f].t===S.m&&!S.lock)fAnswer(f)}else fExplore(f);return}
+ if(isF(S.m)){if(S.sub==='quiz'){if(S.qf[S.i]==='find'&&p&&!S.lock)fAnswerPos(p,f)}else fExplore(f);return}
  if(S.m==='member'){if(S.sub!=='quiz')memIntro(k);return}
  if(S.m==='study'){clear();if(!k)return intro();const c=D.c[k];svg.classList.add('dim');G(k).classList.add('hl');place('cap',c);
   card.innerHTML=countryCard(k)+'<p class="hint">Klikni na ďalší štát.</p>';afterCountry(k);return}
