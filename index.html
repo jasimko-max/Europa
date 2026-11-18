@@ -57,6 +57,12 @@ h1{margin:0;font-size:38px;line-height:1;font-weight:800;letter-spacing:-.02em}
 .choices button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
 .msg{font-size:20px;font-weight:700}
 .msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}.msg.half{color:#b57a00}
+ol.rev{margin:0;padding:0;list-style:none;display:grid;gap:3px;font-size:15px}
+ol.rev li{display:flex;gap:8px;align-items:baseline;padding:4px 8px;border-radius:8px;background:#f1f4fb}
+ol.rev .rs{width:1.2em;font-weight:800;text-align:center}.rs.ok{color:var(--ok)}.rs.half{color:#b57a00}.rs.bad{color:var(--bad)}
+ol.rev li>span:nth-child(2),ol.rev li>span:only-of-type{flex:1}ol.rev li>span:first-child:not(.rs){flex:1}ol.rev em{opacity:.65;font-style:normal;font-size:13px}
+#fbk .rl{font:700 10px var(--font);fill:#1b2a41;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+#fbk .rt{fill:var(--ok);stroke:#fff;stroke-width:1.2}
 .ans,.hint{margin:0;font-size:17px;line-height:1.35}
 .hint{opacity:.65;font-size:15px}
 .primary{font:700 17px var(--font);padding:12px 18px;border:0;border-radius:12px;background:var(--deep);color:#fff;cursor:pointer;margin-top:6px}
@@ -294,7 +300,7 @@ function fIntro(){clear();resetView();S.sub='';const L=FL(S.m);
  card.innerHTML=`<div class="q">${FT[S.m]}</div><p class="ans">${S.m==='water'?'Klikni na plochu mora, značku prielivu alebo čiaru prieplavu a zobrazí sa názov.':`Klikni na ${S.m==='mts'?'pohorie':'značku'}${S.m==='rivers'?' alebo čiaru':''} a zobrazí sa názov.`}</p><button class="primary" id="fquiz">Kvíz na 10 otázok</button><p class="hint">Na mape je ${L.length}: ${L.map(x=>x.n).sort((a,b)=>a.localeCompare(b,'sk')).join(', ')}.</p>`}
 function fExplore(id){clear();if(!id||!FA[id])return fIntro();FEL(id).classList.add('hl');fMark(id);
  card.innerHTML=`<div class="q"><b>${fName(FA[id])}</b></div>${FA[id].i?`<p class="ans">${FA[id].i}</p>`:''}${phHolder(id)}<p class="hint">${S.m==='mts'?'Klikni na ďalšie pohorie.':'Klikni na ďalšiu značku.'}</p><button class="primary" id="fquiz">Kvíz na 10 otázok</button>`;showPhoto(id)}
-function fQuiz(){clear();resetView();S.sub='quiz';S.q=sh(FL(S.m).map(x=>x.id)).slice(0,10);S.qf=S.q.map(()=>Math.random()<.5?'find':'name');S.i=0;S.ok=0;S.bad=[];S.fd=[];fNext()}
+function fQuiz(){clear();resetView();S.sub='quiz';S.q=sh(FL(S.m).map(x=>x.id)).slice(0,10);S.qf=S.q.map(()=>Math.random()<.5?'find':'name');S.i=0;S.ok=0;S.bad=[];S.fd=[];S.rev=[];fNext()}
 function fNext(){clear();S.lock=false;const id=S.q[S.i],f=FA[id],ty=S.qf[S.i];let q,ch='';
  if(ty==='find')q=`Nájdi na mape: <b>${f.n}</b><div class="hint" style="margin-top:8px;font-weight:500">Klikni čo najbližšie, počíta sa vzdialenosť.</div>`;
  else{FEL(id).classList.add('hl');fMark(id);q=S.m==='rivers'?'Ako sa volá táto rieka?':S.m==='mts'?'Ako sa volá toto pohorie?':S.m==='water'?'Ako sa volá tento vodný útvar?':'Ako sa volá toto mesto?';
@@ -303,7 +309,7 @@ function fNext(){clear();S.lock=false;const id=S.q[S.i],f=FA[id],ty=S.qf[S.i];le
 function fAnswer(sel){if(S.lock)return;S.lock=true;const id=S.q[S.i],f=FA[id],ok=sel===id,ty=S.qf[S.i];
  FEL(id).classList.add('ok');fMark(id);if(!ok&&ty==='find')FEL(sel).classList.add('bad');
  card.querySelectorAll('[data-fo]').forEach(b=>{b.disabled=true;if(b.dataset.fo===id)b.classList.add('ok');else if(b.dataset.fo===sel)b.classList.add('bad')});
- ok?S.ok++:S.bad.push(id);
+ ok?S.ok++:S.bad.push(id);S.rev.push({id,n:f.n,ty,pts:ok?1:0});
  $('#fb').innerHTML=`<div class="msg ${ok?'ok':'bad'}">${ok?'Správne!':(ty==='find'?'Nie, to je '+FA[sel].n+'.':'Nie.')}</div><p class="ans"><b>${fName(f)}</b></p>${f.i?`<p class="hint">${f.i}</p>`:''}${phHolder(id)}<button class="primary" id="fnext">${S.i+1<S.q.length?'Ďalej':'Výsledok'}</button>`;showPhoto(id);$('#fnext').focus()}
 /* ---- hodnotenie podľa vzdialenosti (kvíz „Nájdi na mape“) ---- */
 const fmt=v=>String(Math.round(v*10)/10).replace('.',',');
@@ -327,17 +333,43 @@ function fAnswerPos(p,fc){if(S.lock)return;S.lock=true;
  FEL(id).classList.add('ok');fMark(id);
  const sc=Math.max(vb[2]/V0[2],.25);
  $('#fbk').innerHTML=(!r.inside&&pts<1?`<line x1="${p.x}" y1="${p.y}" x2="${tx}" y2="${ty}"/>`:'')+['ch','ck '+(pts>=1?'g':pts>0?'y':'')].map(c=>`<path class="${c}" data-x="${p.x}" data-y="${p.y}" transform="translate(${p.x} ${p.y}) scale(${sc})" d="M-5-5L5 5M-5 5L5-5"/>`).join('');
- S.ok+=pts;if(pts<1)S.bad.push(id);S.fd.push(r.inside?0:km);
+ S.ok+=pts;if(pts<1)S.bad.push(id);S.fd.push(r.inside?0:km);S.rev.push({id,n:f.n,ty:'find',pts,km:r.inside?0:km,in:!!r.inside,p:{x:p.x,y:p.y},near:r.near?{x:r.near.x,y:r.near.y}:null});
  const kl=(fc&&FA[fc]&&fc!==id&&FA[fc].t===f.t)?` Klikol si na: ${FA[fc].n}.`:'';
  let msg,cls;
  if(pts===1){cls='ok';msg=r.inside?'Správne! Trafil si.':(km<1?'Správne! Trafil si presne.':`Správne! Bol si od cieľa len ${kmTxt(km)}.`)}
  else if(pts>0){cls='half';msg=`Skoro! Bol si ${kmTxt(km)} od cieľa. (0,5 bodu)`}
  else{cls='bad';msg=`Netrafil si. Od cieľa ťa delilo ${kmTxt(km)}.${kl}`}
  $('#fb').innerHTML=`<div class="msg ${cls}">${msg}</div><p class="ans"><b>${fName(f)}</b></p>${f.i?`<p class="hint">${f.i}</p>`:''}${phHolder(id)}<button class="primary" id="fnext">${S.i+1<S.q.length?'Ďalej':'Výsledok'}</button>`;showPhoto(id);$('#fnext').focus()}
-function fEnd(){clear();resetView();const n=S.q.length;
+/* ---- trieda, rozbor kola a história výsledkov ---- */
+const CLS_KEY='geo_cls_v1',HIST_KEY='geo_hist_v1';
+const normCls=v=>String(v||'').replace(/\s+/g,'').toUpperCase().slice(0,8);
+const getCls=()=>{try{return localStorage.getItem(CLS_KEY)||''}catch(e){return''}};
+const setCls=v=>{try{localStorage.setItem(CLS_KEY,v)}catch(e){}};
+const histGet=()=>{try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]')}catch(e){return[]}};
+const histAdd=x=>{try{const a=histGet();a.push(x);localStorage.setItem(HIST_KEY,JSON.stringify(a.slice(-60)))}catch(e){}};
+const missHtml=c=>{const m=[...new Set(c.ans.filter(a=>!a[2]).map(a=>a[1]))].slice(0,8);return m.length?`<div class="lbh">Čo si minul</div><ul class="miss">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''};
+const cutName=s=>String(s).replace(/<[^>]*>/g,'').slice(0,48);
+function revHtml(){if(!S.rev||!S.rev.length)return'';
+ return `<div class="lbh">Rozbor kola</div><ol class="rev">${S.rev.map(r=>{const k=r.pts>=1?'ok':r.pts>0?'half':'bad';return `<li><span class="rs ${k}">${r.pts>=1?'✓':r.pts>0?'½':'✗'}</span><span>${esc(r.n)}</span><em>${r.p?(r.in?'trafené':kmTxt(r.km)):''}</em></li>`}).join('')}</ol>`+(S.rev.some(r=>r.p)?'<button class="link" id="revmap">Ukázať kliknutia na mape</button>':'')}
+function showRev(){clear();resetView();let h='';
+ S.rev.filter(r=>r.p).forEach(r=>{const c=r.pts>=1?'g':r.pts>0?'y':'',far=r.near&&!r.in,tx=far?r.near.x:r.p.x,ty=far?r.near.y:r.p.y;
+  if(far&&r.pts<1)h+=`<line x1="${r.p.x}" y1="${r.p.y}" x2="${r.near.x}" y2="${r.near.y}"/>`;
+  if(far)h+=`<path class="rt" data-x="${tx}" data-y="${ty}" transform="translate(${tx} ${ty})" d="M0-4L4 0L0 4L-4 0Z"/>`;
+  h+=['ch','ck '+c].map(k=>`<path class="${k}" data-x="${r.p.x}" data-y="${r.p.y}" transform="translate(${r.p.x} ${r.p.y})" d="M-5-5L5 5M-5 5L5-5"/>`).join('');
+  h+=`<text class="rl" data-x="${tx+6}" data-y="${ty-6}" transform="translate(${tx+6} ${ty-6})">${esc(r.n)}</text>`});
+ $('#fbk').innerHTML=h}
+function quizHist(n,label){histAdd({t:Date.now(),k:'quiz',th:label,s:S.ok,n,km:S.fd&&S.fd.length?Math.round(S.fd.reduce((a,b)=>a+b,0)/S.fd.length):null,miss:(S.rev||[]).filter(r=>r.pts<1).map(r=>cutName(r.n))})}
+function histView(){clear();resetView();const all=histGet(),a=all.slice(-10).reverse(),cnt={};
+ all.forEach(h=>(h.miss||[]).forEach(n=>cnt[n]=(cnt[n]||0)+1));
+ const top=Object.entries(cnt).sort((x,y)=>y[1]-x[1]).slice(0,6),d=t=>new Date(t).toLocaleDateString('sk-SK',{day:'numeric',month:'numeric'});
+ card.innerHTML=`<div class="q">Moje výsledky</div>`+(a.length?`<ol class="rev">${a.map(h=>`<li><span>${esc(h.th)} · ${h.k==='comp'?'súťaž':'kvíz'}</span><em>${d(h.t)}</em><b>${h.k==='comp'?h.s+' b.':fmt(h.s)+' / '+h.n}</b></li>`).join('')}</ol>`:'<p class="ans">Zatiaľ si nehral žiadne kolo.</p>')
+  +(top.length?`<div class="lbh">Najčastejšie chyby</div><ul class="miss">${top.map(([n,c])=>`<li>${esc(n)} <em style="opacity:.6;font-style:normal">(${c}×)</em></li>`).join('')}</ul>`:'')
+  +`<div class="row"><button class="primary alt" id="hback">Späť</button>${all.length?'<button class="link" id="hclr">Vymazať moju históriu</button>':''}</div><p class="hint">Uložené len v tomto prehliadači.</p>`}
+const TYL={find:'poloha',findcap:'poloha podľa mesta',cap:'hlavné mesto',flag:'vlajka'};
+function fEnd(){clear();resetView();const n=S.q.length;quizHist(n,'Európa – '+FT[S.m]);
  card.innerHTML=`<div class="meta"><span>Koniec kola</span></div><div class="score">${fmt(S.ok)}<small> / ${n}</small></div><div class="msg">${S.ok===n?'Bezchybne!':S.ok>=n*.7?'Dobrá práca.':'Ešte si to precvičíme.'}</div>`+
- (S.fd&&S.fd.length?`<p class="hint">Priemerná vzdialenosť pri hľadaní na mape: <b>${kmTxt(S.fd.reduce((a,b)=>a+b,0)/S.fd.length)}</b></p>`:'')+(S.bad.length?`<div>Zopakuj si:</div><ul class="miss">${S.bad.map(id=>`<li><b>${fName(FA[id])}</b></li>`).join('')}</ul>`:'')+
- `<div class="row"><button class="primary" id="fagain">Nové kolo</button><button class="primary alt" id="fback">Späť na mapu</button></div>`}
+ (S.fd&&S.fd.length?`<p class="hint">Priemerná vzdialenosť pri hľadaní na mape: <b>${kmTxt(S.fd.reduce((a,b)=>a+b,0)/S.fd.length)}</b></p>`:'')+revHtml()+
+ `<div class="row"><button class="primary" id="fagain">Nové kolo</button><button class="primary alt" id="fback">Späť na mapu</button><button class="link" id="myres">Moje výsledky</button></div>`}
 const sp=s=>s.split(' ');
 const MEM={
  eu:['EÚ',sp('AUT BEL BGR HRV CYP CZE DNK EST FIN FRA DEU GRC HUN IRL ITA LVA LTU LUX MLT NLD POL PRT ROU SVK SVN ESP SWE'),'Európskej únie'],
@@ -363,12 +395,12 @@ function memEnd(){clear();resetView();const n=S.q.length;
  card.innerHTML=`<div class="meta"><span>Koniec kola</span></div><div class="score">${S.ok}<small> / ${n}</small></div><div class="msg">${S.ok===n?'Bezchybne!':S.ok>=n*.7?'Dobrá práca.':'Ešte si to precvičíme.'}</div>`+
  (S.bad.length?`<div>Zopakuj si:</div><ul class="miss">${S.bad.map(x=>`<li><b>${D.c[x.k].n}</b> – ${x.truth?'je':'nie je'} členom ${MEM[x.l][2]}</li>`).join('')}</ul>`:'')+
  `<div class="row"><button class="primary" id="memagain">Nové kolo</button><button class="primary alt" id="memback">Späť na mapu</button></div>`}
-function compIntro(){clear();resetView();card.innerHTML=`<div class="q">Súťaž na 60 sekúnd</div><p class="ans">Odpovedaj na čo najviac otázok. Za každú správnu odpoveď je bod. Otázky sa striedajú: nájdi štát, štát podľa mesta, hlavné mesto, vlajka.</p><label class="nm">Prezývka<input id="nm" maxlength="20" autocomplete="off" placeholder="Prezývka (nie celé meno)"></label><button class="primary" id="go">Štart</button>${lbHtml()}<div class="row"><button class="link" id="exp">Stiahnuť výsledky (CSV)</button><button class="link" id="clr">Vymazať rebríček</button></div>`;refreshLB()}
-function compStart(){const n=($('#nm').value||'').trim()||'Hráč';S.name=n;S.cs={ok:0,bad:0,end:Date.now()+60000,last:null};S.live=true;compNext();S.tm=setInterval(tick,200)}
+function compIntro(){clear();resetView();card.innerHTML=`<div class="q">Súťaž na 60 sekúnd</div><p class="ans">Odpovedaj na čo najviac otázok. Za každú správnu odpoveď je bod. Otázky sa striedajú: nájdi štát, štát podľa mesta, hlavné mesto, vlajka.</p><label class="nm">Prezývka<input id="nm" maxlength="20" autocomplete="off" placeholder="Prezývka (nie celé meno)"></label><label class="nm">Trieda<input id="cls" maxlength="8" autocomplete="off" placeholder="napr. 5.A" value="${esc(getCls())}"></label><button class="primary" id="go">Štart</button>${lbHtml()}<div class="row"><button class="link" id="myres">Moje výsledky</button><button class="link" id="exp">Stiahnuť výsledky (CSV)</button><button class="link" id="clr">Vymazať rebríček</button></div>`;refreshLB()}
+function compStart(){const n=($('#nm').value||'').trim()||'Hráč';S.name=n;S.cls=normCls($('#cls')?$('#cls').value:'');setCls(S.cls);S.cs={ok:0,bad:0,end:Date.now()+60000,last:null,ans:[]};S.live=true;compNext();S.tm=setInterval(tick,200)}
 function tick(){const left=Math.max(0,S.cs.end-Date.now()),e=$('#tm'),b=$('#tb');if(e)e.textContent=Math.ceil(left/1000);if(b)b.style.width=left/600+'%';if(left<=0)compEnd()}
 function compNext(){if(!S.live)return;const pl=pool().filter(k=>k!==S.cs.last),k=pl[Math.random()*pl.length|0];S.cs.last=k;S.qt=['find','findcap','cap','flag'][Math.random()*4|0];S.q=[k];S.i=0;next()}
-function compEnd(){clearInterval(S.tm);clearTimeout(S.to);S.live=false;S.lock=true;clear();resetView();const c=S.cs,id=Date.now(),a=lbGet();a.push({id,n:S.name,s:c.ok,b:c.bad,r:S.r});lbSet(a.slice(-300));
- card.innerHTML=`<div class="meta"><span>Čas vypršal</span></div><div class="score">${c.ok}<small> bodov</small></div><p class="ans">${esc(S.name)} · chýb: ${c.bad}</p>${lbHtml(id)}<div class="row"><button class="primary" id="cagain">Ďalší hráč</button></div>`;postScore({id,n:S.name,s:c.ok,b:c.bad,r:S.r}).then(()=>refreshLB(id))}
+function compEnd(){clearInterval(S.tm);clearTimeout(S.to);S.live=false;S.lock=true;clear();resetView();const c=S.cs,id=Date.now(),a=lbGet();a.push({id,n:S.name,c:S.cls,s:c.ok,b:c.bad,r:S.r});lbSet(a.slice(-300));histAdd({t:Date.now(),k:'comp',th:'Európa – súťaž',s:c.ok,n:c.ok+c.bad,miss:c.ans.filter(x=>!x[2]).map(x=>x[1])});
+ card.innerHTML=`<div class="meta"><span>Čas vypršal</span></div><div class="score">${c.ok}<small> bodov</small></div><p class="ans">${esc(S.name)}${S.cls?' · '+esc(S.cls):''} · chýb: ${c.bad}</p>${missHtml(c)}${lbHtml(id)}<div class="row"><button class="primary" id="cagain">Ďalší hráč</button><button class="link" id="myres">Moje výsledky</button></div>`;postScore({id,n:S.name,c:S.cls,s:c.ok,b:c.bad,r:S.r,a:c.ans.slice(0,150)}).then(()=>refreshLB(id))}
 const sh=a=>{a=[...a];for(let i=a.length;i>1;){const j=Math.random()*i--|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const pool=()=>REG[S.r][1].filter(k=>D.c[k]);
 const G=k=>svg.querySelector('[data-k="'+k+'"]');
@@ -400,14 +432,14 @@ function answer(sel){if(S.lock)return;S.lock=true;
  svg.classList.add('dim');G(k).classList.add('ok');if(!ok&&click)G(sel).classList.add('bad');
  place('cap',c);if(c.m&&click)place('ring',c);
  card.querySelectorAll('[data-o]').forEach(b=>{b.disabled=true;if(b.dataset.o===k)b.classList.add('ok');else if(b.dataset.o===sel)b.classList.add('bad')});
- if(S.m==='comp'){ok?S.cs.ok++:S.cs.bad++;$('#fb').innerHTML=`<div class="msg ${ok?'ok':'bad'}">${ok?'Správne!':(click?'Nie, to je '+D.c[sel].n+'.':'Nie.')}</div><p class="ans"><b>${c.n}</b> – hlavné mesto <b>${c.cap}</b></p>`;S.to=setTimeout(compNext,ok?500:1500);return}
+ if(S.m==='comp'){S.cs.ans.push([k,cutName(c.n+' ('+(TYL[ty]||ty)+')'),ok?1:0]);ok?S.cs.ok++:S.cs.bad++;$('#fb').innerHTML=`<div class="msg ${ok?'ok':'bad'}">${ok?'Správne!':(click?'Nie, to je '+D.c[sel].n+'.':'Nie.')}</div><p class="ans"><b>${c.n}</b> – hlavné mesto <b>${c.cap}</b></p>`;S.to=setTimeout(compNext,ok?500:1500);return}
  ok?S.ok++:S.bad.push(k);
  $('#fb').innerHTML=`<div class="msg ${ok?'ok':'bad'}">${ok?'Správne!':(click?'Nie, to je '+D.c[sel].n+'.':'Nie.')}</div><p class="ans"><b>${c.n}</b> – hlavné mesto <b>${c.cap}</b></p>${c.i?`<p class="hint">${c.i}</p>`:''}<button class="primary" id="next">${S.i+1<S.q.length?'Ďalej':'Výsledok'}</button>`;
  $('#next').focus()}
-function end(){clear();resetView();const n=S.q.length;
+function end(){clear();resetView();const n=S.q.length;histAdd({t:Date.now(),k:'quiz',th:'Európa – štáty',s:S.ok,n,km:null,miss:S.bad.map(k=>D.c[k]?D.c[k].n:'')});
  card.innerHTML=`<div class="meta"><span>Koniec kola</span></div><div class="score">${S.ok}<small> / ${n}</small></div><div class="msg">${S.ok===n?'Bezchybne!':S.ok>=n*.7?'Dobrá práca.':'Ešte si to precvičíme.'}</div>`+
  (S.bad.length?`<div>Zopakuj si:</div><ul class="miss">${S.bad.map(k=>`<li><b>${D.c[k].n}</b> – ${D.c[k].cap}</li>`).join('')}</ul>`:'')+
- `<div class="row"><button class="primary" id="again">Nové kolo</button>${S.bad.length?'<button class="primary alt" id="redo">Len chyby</button>':''}</div>`}
+ `<div class="row"><button class="primary" id="again">Nové kolo</button>${S.bad.length?'<button class="primary alt" id="redo">Len chyby</button>':''}<button class="link" id="myres">Moje výsledky</button></div>`}
 function profileHtml(k){
  const c=D.c[k],p=c.pr;if(!p)return '';
  const kv=a=>'<table class="kv">'+a.map(([x,y])=>`<tr><th>${x}</th><td>${y}</td></tr>`).join('')+'</table>';
@@ -497,7 +529,9 @@ card.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)retur
  if(b.id==='memagain')return memQuiz();
  if(b.id==='memback')return memIntro();
  if(b.id==='next'){S.i++;return S.i>=S.q.length?end():next()}
- if(b.id==='again')return start();
+ if(b.id==='myres')return histView();if(b.id==='hback')return start();if(b.id==='revmap')return showRev();
+  if(b.id==='hclr'){try{localStorage.removeItem(HIST_KEY)}catch(e){}return histView()}
+  if(b.id==='again')return start();
  if(b.id==='go')return compStart();
  if(b.id==='doprint'){buildSheet();setTimeout(()=>window.print(),80);return}
  if(b.id==='cagain')return compIntro();
@@ -505,7 +539,7 @@ card.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)retur
  if(b.id==='clr'){if(API){const key=prompt('Admin kľúč na vymazanie spoločného rebríčka:');if(key)fetch(API+'/scores',{method:'DELETE',headers:{'X-Admin':key}}).then(()=>{lbSet([]);compIntro()});return}
   if(confirm('Vymazať celý rebríček na tomto zariadení?')){lbSet([]);compIntro()}return}
  if(b.id==='redo'){S.q=sh(S.bad);S.i=0;S.ok=0;S.bad=[];next()}});
-card.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='nm')compStart()});
+card.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='nm'||e.target.id==='cls'))compStart()});
 card.addEventListener('change',e=>{if(S.m==='clues'&&e.target.id==='clch'&&CL&&!CL.lock){CLCH=e.target.checked;clRender('')}});
 $('#modes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
  document.querySelectorAll('#modes button').forEach(x=>x.setAttribute('aria-pressed',x===b));S.m=b.dataset.m;start()});
@@ -619,7 +653,7 @@ async function exportCSV(){
  if(!rows.length){alert('Zatiaľ nie sú žiadne výsledky.');return}
  rows.sort((a,b)=>EXPCFG.keys.indexOf(a.r)-EXPCFG.keys.indexOf(b.r)||b.s-a.s||a.b-b.b);
  const q=v=>{v=String(v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
- const lines=['Prezývka;Oblasť / téma;Body;Chyby;Dátum'].concat(rows.map(x=>[q(x.n),q(EXPCFG.label(x.r)),x.s,x.b,q(new Date(x.id).toLocaleString('sk-SK'))].join(';')));
+ const lines=['Prezývka;Trieda;Oblasť / téma;Body;Chyby;Dátum'].concat(rows.map(x=>[q(x.n),q(x.c||''),q(EXPCFG.label(x.r)),x.s,x.b,q(new Date(x.id).toLocaleString('sk-SK'))].join(';')));
  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vysledky-'+EXPCFG.file+'-'+new Date().toISOString().slice(0,10)+'.csv';
  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}

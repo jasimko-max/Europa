@@ -51,6 +51,12 @@ main{display:grid;grid-template-columns:1fr 370px;height:100%}
 #fbk{pointer-events:none}#fbk line{stroke:var(--bad);stroke-width:2.2;stroke-dasharray:5 4;vector-effect:non-scaling-stroke}
 #fbk .ck{fill:none;stroke:var(--bad);stroke-width:3.2;stroke-linecap:round;vector-effect:non-scaling-stroke}#fbk .ck.g{stroke:var(--ok)}#fbk .ck.y{stroke:#f0a500}#fbk .ch{fill:none;stroke:#fff;stroke-width:6.5;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .msg.half{color:#b57a00}
+ol.rev{margin:0;padding:0;list-style:none;display:grid;gap:3px;font-size:15px}
+ol.rev li{display:flex;gap:8px;align-items:baseline;padding:4px 8px;border-radius:8px;background:#f1f4fb}
+ol.rev .rs{width:1.2em;font-weight:800;text-align:center}.rs.ok{color:var(--ok)}.rs.half{color:#b57a00}.rs.bad{color:var(--bad)}
+ol.rev li>span:nth-child(2),ol.rev li>span:only-of-type{flex:1}ol.rev li>span:first-child:not(.rs){flex:1}ol.rev em{opacity:.65;font-style:normal;font-size:13px}
+#fbk .rl{font:700 10px var(--font);fill:#1b2a41;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+#fbk .rt{fill:var(--ok);stroke:#fff;stroke-width:1.2}
 .zoom{position:absolute;left:14px;bottom:14px;display:flex;flex-direction:column;gap:6px}
 .zoom button{width:42px;height:42px;border:0;border-radius:10px;background:#fff;color:var(--ink);font:700 20px var(--font);cursor:pointer;box-shadow:0 1px 4px #0003}
 aside{background:var(--deep);color:#fff;padding:22px 20px;display:flex;flex-direction:column;gap:14px;overflow:auto}
@@ -239,7 +245,7 @@ function intro(){clear();resetView();S.sub='';const t=S.m,L=D[t];
  card.innerHTML=`<div class="q">${TH[t]}</div><p class="ans">Klikni na ${t==='kraje'?'kraj':t==='rieky'?'rieku alebo čiaru':(t==='pohoria'||t==='nizine')?'farebnú plochu':'značku'} a zobrazí sa názov.</p><button class="primary" id="quiz">Kvíz na 10 otázok</button><p class="hint">Na mape je ${L.length}: ${L.map(x=>x.n).sort((a,b)=>a.localeCompare(b,'sk')).join(', ')}.</p>`}
 function explore(id){clear();if(!id||!FA[id])return intro();FEL(id).classList.add('hl');mark(id);
  card.innerHTML=`<div class="q"><b>${nameOf(FA[id])}</b></div>${FA[id].i?`<p class="ans">${FA[id].i}</p>`:''}${phHolder(id)}<p class="hint">Klikni na ďalšiu.</p><button class="primary" id="quiz">Kvíz na 10 otázok</button>`;showPhoto(id)}
-function quiz(){clear();resetView();S.sub='quiz';const t=theme();S.q=sh(items(t)).slice(0,10);S.qt=S.q.map(id=>pickType(id,t));S.i=0;S.ok=0;S.bad=[];S.fd=[];nextQ()}
+function quiz(){clear();resetView();S.sub='quiz';const t=theme();S.q=sh(items(t)).slice(0,10);S.qt=S.q.map(id=>pickType(id,t));S.i=0;S.ok=0;S.bad=[];S.fd=[];S.rev=[];nextQ()}
 function choices(id,ty,t){const it=FA[id];let corr,pool,lab;
  if(ty==='name'){corr=id;pool=items(t);lab=x=>FA[x].n}else if(ty==='cap'){corr=id;pool=items('kraje');lab=x=>FA[x].cap}else{corr=it.kr;pool=items('kraje');lab=x=>FA[x].n}
  const opts=sh([corr,...sh(pool.filter(x=>x!==corr)).slice(0,3)]);
@@ -255,8 +261,8 @@ function answer(sel){if(S.lock)return;S.lock=true;const id=S.q[S.i],it=FA[id],ty
  if(ty==='find'){ok=sel===id;FEL(id).classList.add('ok');if(!ok)FEL(sel).classList.add('bad');if(FA[id].t==='kraje')svg.classList.add('dim')}
  else{ok=sel===S.cur.corr;FEL(id).classList.add('ok');mark(id);card.querySelectorAll('[data-o]').forEach(b=>{b.disabled=true;if(b.dataset.o===S.cur.corr)b.classList.add('ok');else if(b.dataset.o===sel)b.classList.add('bad')})}
  const fb=`<div class="msg ${ok?'ok':'bad'}">${ok?'Správne!':(ty==='find'?'Nie, to je '+FA[sel].n+'.':'Nie.')}</div><p class="ans"><b>${nameOf(it)}</b></p>${it.i?`<p class="hint">${it.i}</p>`:''}`;
- if(S.m==='comp'){ok?S.cs.ok++:S.cs.bad++;$('#fb').innerHTML=fb;S.to=setTimeout(compNext,ok?500:1500);return}
- ok?S.ok++:S.bad.push(id);
+ if(S.m==='comp'){S.cs.ans.push([id,cutName(it.n+' ('+(TYL[ty]||ty)+')'),ok?1:0]);ok?S.cs.ok++:S.cs.bad++;$('#fb').innerHTML=fb;S.to=setTimeout(compNext,ok?500:1500);return}
+ ok?S.ok++:S.bad.push(id);S.rev.push({id,n:it.n,ty,pts:ok?1:0});
  $('#fb').innerHTML=fb+phHolder(id)+`<button class="primary" id="next">${S.i+1<S.q.length?'Ďalej':'Výsledok'}</button>`;showPhoto(id);$('#next').focus()}
 /* ---- hodnotenie podľa vzdialenosti (kvíz „Nájdi na mape") ---- */
 const fmt=v=>String(Math.round(v*10)/10).replace('.',',');
@@ -280,18 +286,44 @@ function answerPos(p,fc){if(S.lock)return;S.lock=true;
  FEL(id).classList.add('ok');mark(id);if(t==='kraje')svg.classList.add('dim');
  const fk=$('#fbk'),sc=Math.max(vb[2]/V0[2],.2);
  fk.innerHTML=(!r.inside&&pts<1?`<line x1="${p.x}" y1="${p.y}" x2="${tx}" y2="${ty}"/>`:'')+['ch','ck '+(pts>=1?'g':pts>0?'y':'')].map(c=>`<path class="${c}" data-x="${p.x}" data-y="${p.y}" transform="translate(${p.x} ${p.y}) scale(${sc})" d="M-5-5L5 5M-5 5L5-5"/>`).join('');
- S.ok+=pts;if(pts<1)S.bad.push(id);S.fd.push(r.inside?0:km);
+ S.ok+=pts;if(pts<1)S.bad.push(id);S.fd.push(r.inside?0:km);S.rev.push({id,n:it.n,ty:'find',pts,km:r.inside?0:km,in:!!r.inside,p:{x:p.x,y:p.y},near:r.near?{x:r.near.x,y:r.near.y}:null});
  const kl=(fc&&FA[fc]&&fc!==id&&FA[fc].t===t)?` Klikol si na: ${FA[fc].n}.`:'';
  let msg,cls;
  if(pts===1){cls='ok';msg=r.inside?'Správne! Trafil si.':(km<1?'Správne! Trafil si presne.':`Správne! Bol si od cieľa len ${kmTxt(km)}.`)}
  else if(pts>0){cls='half';msg=`Skoro! Bol si ${kmTxt(km)} od cieľa. (0,5 bodu)`}
  else{cls='bad';msg=`Netrafil si. Od cieľa ťa delilo ${kmTxt(km)}.${kl}`}
  $('#fb').innerHTML=`<div class="msg ${cls}">${msg}</div><p class="ans"><b>${nameOf(it)}</b></p>${it.i?`<p class="hint">${it.i}</p>`:''}${phHolder(id)}<button class="primary" id="next">${S.i+1<S.q.length?'Ďalej':'Výsledok'}</button>`;showPhoto(id);$('#next').focus()}
-function end(){clear();resetView();const n=S.q.length;
+/* ---- trieda, rozbor kola a história výsledkov ---- */
+const CLS_KEY='geo_cls_v1',HIST_KEY='geo_hist_v1';
+const normCls=v=>String(v||'').replace(/\s+/g,'').toUpperCase().slice(0,8);
+const getCls=()=>{try{return localStorage.getItem(CLS_KEY)||''}catch(e){return''}};
+const setCls=v=>{try{localStorage.setItem(CLS_KEY,v)}catch(e){}};
+const histGet=()=>{try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]')}catch(e){return[]}};
+const histAdd=x=>{try{const a=histGet();a.push(x);localStorage.setItem(HIST_KEY,JSON.stringify(a.slice(-60)))}catch(e){}};
+const missHtml=c=>{const m=[...new Set(c.ans.filter(a=>!a[2]).map(a=>a[1]))].slice(0,8);return m.length?`<div class="lbh">Čo si minul</div><ul class="miss">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''};
+const cutName=s=>String(s).replace(/<[^>]*>/g,'').slice(0,48);
+function revHtml(){if(!S.rev||!S.rev.length)return'';
+ return `<div class="lbh">Rozbor kola</div><ol class="rev">${S.rev.map(r=>{const k=r.pts>=1?'ok':r.pts>0?'half':'bad';return `<li><span class="rs ${k}">${r.pts>=1?'✓':r.pts>0?'½':'✗'}</span><span>${esc(r.n)}</span><em>${r.p?(r.in?'trafené':kmTxt(r.km)):''}</em></li>`}).join('')}</ol>`+(S.rev.some(r=>r.p)?'<button class="link" id="revmap">Ukázať kliknutia na mape</button>':'')}
+function showRev(){clear();resetView();let h='';
+ S.rev.filter(r=>r.p).forEach(r=>{const c=r.pts>=1?'g':r.pts>0?'y':'',far=r.near&&!r.in,tx=far?r.near.x:r.p.x,ty=far?r.near.y:r.p.y;
+  if(far&&r.pts<1)h+=`<line x1="${r.p.x}" y1="${r.p.y}" x2="${r.near.x}" y2="${r.near.y}"/>`;
+  if(far)h+=`<path class="rt" data-x="${tx}" data-y="${ty}" transform="translate(${tx} ${ty})" d="M0-4L4 0L0 4L-4 0Z"/>`;
+  h+=['ch','ck '+c].map(k=>`<path class="${k}" data-x="${r.p.x}" data-y="${r.p.y}" transform="translate(${r.p.x} ${r.p.y})" d="M-5-5L5 5M-5 5L5-5"/>`).join('');
+  h+=`<text class="rl" data-x="${tx+6}" data-y="${ty-6}" transform="translate(${tx+6} ${ty-6})">${esc(r.n)}</text>`});
+ $('#fbk').innerHTML=h}
+function quizHist(n,label){histAdd({t:Date.now(),k:'quiz',th:label,s:S.ok,n,km:S.fd&&S.fd.length?Math.round(S.fd.reduce((a,b)=>a+b,0)/S.fd.length):null,miss:(S.rev||[]).filter(r=>r.pts<1).map(r=>cutName(r.n))})}
+function histView(){clear();resetView();const all=histGet(),a=all.slice(-10).reverse(),cnt={};
+ all.forEach(h=>(h.miss||[]).forEach(n=>cnt[n]=(cnt[n]||0)+1));
+ const top=Object.entries(cnt).sort((x,y)=>y[1]-x[1]).slice(0,6),d=t=>new Date(t).toLocaleDateString('sk-SK',{day:'numeric',month:'numeric'});
+ card.innerHTML=`<div class="q">Moje výsledky</div>`+(a.length?`<ol class="rev">${a.map(h=>`<li><span>${esc(h.th)} · ${h.k==='comp'?'súťaž':'kvíz'}</span><em>${d(h.t)}</em><b>${h.k==='comp'?h.s+' b.':fmt(h.s)+' / '+h.n}</b></li>`).join('')}</ol>`:'<p class="ans">Zatiaľ si nehral žiadne kolo.</p>')
+  +(top.length?`<div class="lbh">Najčastejšie chyby</div><ul class="miss">${top.map(([n,c])=>`<li>${esc(n)} <em style="opacity:.6;font-style:normal">(${c}×)</em></li>`).join('')}</ul>`:'')
+  +`<div class="row"><button class="primary alt" id="hback">Späť</button>${all.length?'<button class="link" id="hclr">Vymazať moju históriu</button>':''}</div><p class="hint">Uložené len v tomto prehliadači.</p>`}
+const TYL={find:'poloha',name:'názov',cap:'krajské mesto',kraj:'kraj'};
+function end(){clear();resetView();const n=S.q.length;quizHist(n,'Slovensko – '+TH[theme()]);
  card.innerHTML=`<div class="meta"><span>Koniec kola</span></div><div class="score">${fmt(S.ok)}<small> / ${n}</small></div><div class="msg">${S.ok===n?'Bezchybne!':S.ok>=n*.7?'Dobrá práca.':'Ešte si to precvičíme.'}</div>`+
  (S.fd&&S.fd.length?`<p class="hint">Priemerná vzdialenosť pri hľadaní na mape: <b>${kmTxt(S.fd.reduce((a,b)=>a+b,0)/S.fd.length)}</b></p>`:'')+
-  (S.bad.length?`<div>Zopakuj si:</div><ul class="miss">${S.bad.map(id=>`<li><b>${nameOf(FA[id])}</b></li>`).join('')}</ul>`:'')+
- `<div class="row"><button class="primary" id="again">Nové kolo</button><button class="primary alt" id="back">Späť na mapu</button></div>`}
+  revHtml()+
+ `<div class="row"><button class="primary" id="again">Nové kolo</button><button class="primary alt" id="back">Späť na mapu</button><button class="link" id="myres">Moje výsledky</button></div>`}
 function mapClick(f,p){
  if(S.m==='layers')return lyClick(null,f);
  if(S.m==='comp'){if(S.live&&S.qt[S.i]==='find'&&f&&FA[f]&&FA[f].t===S.th)answer(f);return}
@@ -307,13 +339,13 @@ async function refreshLB(hl){if(!API)return;try{const r=await fetch(`${API}/scor
 async function postScore(x){if(!API)return;try{await fetch(API+'/scores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(x)})}catch(e){}}
 const themeChips=()=>'<div class="chips">'+Object.entries(TH).map(([k,v])=>`<button class="chip" data-th="${k}" aria-pressed="${k===S.th}">${v}</button>`).join('')+'</div>';
 function compIntro(){clear();resetView();svg.dataset.layer=S.th;
- card.innerHTML=`<div class="q">Súťaž na 60 sekúnd</div>${themeChips()}<p class="ans">Odpovedaj na čo najviac otázok. Správna odpoveď = 1 bod.</p><label class="nm">Prezývka<input id="nm" maxlength="20" autocomplete="off" placeholder="Prezývka (nie celé meno)"></label><button class="primary" id="go">Štart</button>${lbHtml()}<div class="row"><button class="link" id="exp">Stiahnuť výsledky (CSV)</button><button class="link" id="clr">Vymazať rebríček</button></div>`;refreshLB()}
-function compStart(){S.name=($('#nm').value||'').trim()||'Hráč';S.cs={ok:0,bad:0,end:Date.now()+60000,last:null};S.live=true;compNext();S.tm=setInterval(tick,200)}
+ card.innerHTML=`<div class="q">Súťaž na 60 sekúnd</div>${themeChips()}<p class="ans">Odpovedaj na čo najviac otázok. Správna odpoveď = 1 bod.</p><label class="nm">Prezývka<input id="nm" maxlength="20" autocomplete="off" placeholder="Prezývka (nie celé meno)"></label><label class="nm">Trieda<input id="cls" maxlength="8" autocomplete="off" placeholder="napr. 5.A" value="${esc(getCls())}"></label><button class="primary" id="go">Štart</button>${lbHtml()}<div class="row"><button class="link" id="myres">Moje výsledky</button><button class="link" id="exp">Stiahnuť výsledky (CSV)</button><button class="link" id="clr">Vymazať rebríček</button></div>`;refreshLB()}
+function compStart(){S.name=($('#nm').value||'').trim()||'Hráč';S.cls=normCls($('#cls')?$('#cls').value:'');setCls(S.cls);S.cs={ok:0,bad:0,end:Date.now()+60000,last:null,ans:[]};S.live=true;compNext();S.tm=setInterval(tick,200)}
 function tick(){const left=Math.max(0,S.cs.end-Date.now()),e=$('#tm'),b=$('#tb');if(e)e.textContent=Math.ceil(left/1000);if(b)b.style.width=left/600+'%';if(left<=0)compEnd()}
 function compNext(){if(!S.live)return;const pl=items(S.th).filter(k=>k!==S.cs.last),k=pl[Math.random()*pl.length|0];S.cs.last=k;S.q=[k];S.qt=[pickType(k,S.th)];S.i=0;nextQ()}
-function compEnd(){clearInterval(S.tm);clearTimeout(S.to);S.live=false;S.lock=true;clear();resetView();const c=S.cs,id=Date.now(),a=lbGet();a.push({id,n:S.name,s:c.ok,b:c.bad,r:rk()});lbSet(a.slice(-300));
- card.innerHTML=`<div class="meta"><span>Čas vypršal</span></div><div class="score">${c.ok}<small> bodov</small></div><p class="ans">${esc(S.name)} · chýb: ${c.bad}</p>${lbHtml(id)}<div class="row"><button class="primary" id="cagain">Ďalší hráč</button></div>`;
- postScore({id,n:S.name,s:c.ok,b:c.bad,r:rk()}).then(()=>refreshLB(id))}
+function compEnd(){clearInterval(S.tm);clearTimeout(S.to);S.live=false;S.lock=true;clear();resetView();const c=S.cs,id=Date.now(),a=lbGet();a.push({id,n:S.name,c:S.cls,s:c.ok,b:c.bad,r:rk()});lbSet(a.slice(-300));histAdd({t:Date.now(),k:'comp',th:'Slovensko – '+TH[S.th],s:c.ok,n:c.ok+c.bad,miss:c.ans.filter(x=>!x[2]).map(x=>x[1])});
+ card.innerHTML=`<div class="meta"><span>Čas vypršal</span></div><div class="score">${c.ok}<small> bodov</small></div><p class="ans">${esc(S.name)}${S.cls?' · '+esc(S.cls):''} · chýb: ${c.bad}</p>${missHtml(c)}${lbHtml(id)}<div class="row"><button class="primary" id="cagain">Ďalší hráč</button><button class="link" id="myres">Moje výsledky</button></div>`;
+ postScore({id,n:S.name,c:S.cls,s:c.ok,b:c.bad,r:rk(),a:c.ans.slice(0,150)}).then(()=>refreshLB(id))}
 
 /* ---- pracovný list ---- */
 /* ---- ovládanie ---- */
@@ -325,7 +357,9 @@ card.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)retur
  if(b.dataset.o)return answer(b.dataset.o);
  if(b.dataset.th){S.th=b.dataset.th;return start()}
  const id=b.id;
- if(id==='quiz'||id==='again')return quiz();
+ if(id==='myres')return histView();if(id==='hback')return start();if(id==='revmap')return showRev();
+  if(id==='hclr'){try{localStorage.removeItem(HIST_KEY)}catch(e){}return histView()}
+  if(id==='quiz'||id==='again')return quiz();
  if(id==='back')return intro();
  if(id==='next'){S.i++;return S.i>=S.q.length?end():nextQ()}
  if(id==='go')return compStart();if(id==='cagain')return compIntro();
@@ -333,7 +367,7 @@ card.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)retur
  if(id==='clr'){if(API){const key=prompt('Admin kľúč na vymazanie spoločného rebríčka:');if(key)fetch(API+'/scores',{method:'DELETE',headers:{'X-Admin':key}}).then(()=>{lbSet([]);compIntro()});return}
   if(confirm('Vymazať celý rebríček na tomto zariadení?')){lbSet([]);compIntro()}return}
  if(id==='doprint'){buildSheet();setTimeout(()=>window.print(),80)}});
-card.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='nm')compStart()});
+card.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='nm'||e.target.id==='cls'))compStart()});
 $('#modes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
  document.querySelectorAll('#modes button').forEach(x=>x.setAttribute('aria-pressed',x===b));S.m=b.dataset.m;if(isT(S.m))S.th=S.m;start()});
 const isT=m=>m in TH;
@@ -437,7 +471,7 @@ async function exportCSV(){
  if(!rows.length){alert('Zatiaľ nie sú žiadne výsledky.');return}
  rows.sort((a,b)=>EXPCFG.keys.indexOf(a.r)-EXPCFG.keys.indexOf(b.r)||b.s-a.s||a.b-b.b);
  const q=v=>{v=String(v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
- const lines=['Prezývka;Oblasť / téma;Body;Chyby;Dátum'].concat(rows.map(x=>[q(x.n),q(EXPCFG.label(x.r)),x.s,x.b,q(new Date(x.id).toLocaleString('sk-SK'))].join(';')));
+ const lines=['Prezývka;Trieda;Oblasť / téma;Body;Chyby;Dátum'].concat(rows.map(x=>[q(x.n),q(x.c||''),q(EXPCFG.label(x.r)),x.s,x.b,q(new Date(x.id).toLocaleString('sk-SK'))].join(';')));
  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vysledky-'+EXPCFG.file+'-'+new Date().toISOString().slice(0,10)+'.csv';
  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
